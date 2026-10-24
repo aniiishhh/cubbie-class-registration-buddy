@@ -10,7 +10,10 @@ TIMEOUT = (5, 20)
 
 
 class SourceError(RuntimeError):
-    pass
+    def __init__(self, message, *, service=None, http_status=None):
+        super().__init__(message)
+        self.service = service
+        self.http_status = http_status
 
 
 def request_json(session, method, url, service, **kwargs):
@@ -23,7 +26,8 @@ def request_json(session, method, url, service, **kwargs):
         # Do not print headers, credentials, arbitrary response bodies or request URLs.
         status = getattr(getattr(exc, "response", None), "status_code", None)
         detail = f"HTTP {status}" if status else type(exc).__name__
-        raise SourceError(f"{service} is unavailable ({detail}); no result was inferred.") from None
+        raise SourceError(f"{service} is unavailable ({detail}); no result was inferred.",
+                          service=service, http_status=status) from None
     if isinstance(data, dict) and (data.get("errors") or data.get("error")):
         raise SourceError(f"{service} returned an API error; no result was inferred.")
     return data

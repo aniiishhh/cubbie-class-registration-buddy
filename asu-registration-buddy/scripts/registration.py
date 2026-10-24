@@ -15,6 +15,7 @@ from catalog import (CAMPUSES, clean, clock, day_codes, filter_section, normaliz
                      preference_check, term_code, term_label)
 from professors import professor_evidence
 from sources import ASUClient, RMPClient, SourceError
+from snapshots import CacheMiss, build_snapshot, read_snapshot
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_OUTPUT = 7800
@@ -97,7 +98,13 @@ def parser():
     search.add_argument("--max-pages", type=bounded_int(1, 5), default=3)
     search.add_argument("--offset", type=bounded_int(0, 10000), default=0)
     search.add_argument("--save", help="Optional private file for paging fetched candidates without more network calls.")
-    search.add_argument("--sample", action="store_true")
+    mode = search.add_mutually_exclusive_group()
+    mode.add_argument("--sample", action="store_true")
+    mode.add_argument("--cached", action="store_true", help="Explicit bundled public snapshot; never a live seat check.")
+    refresh = sub.add_parser("refresh-snapshot", help="Maintainer command: refresh a complete public subject snapshot.")
+    refresh.add_argument("--term", required=True)
+    refresh.add_argument("--subject", required=True)
+    refresh.add_argument("--max-pages", type=bounded_int(1, 20), default=10)
     page = sub.add_parser("page", help="Read another page from a saved search.")
     page.add_argument("--file", required=True)
     page.add_argument("--offset", type=bounded_int(0, 10000), default=0)
@@ -165,7 +172,13 @@ def search_sections(args):
         params["campus"] = CAMPUSES.get(args.campus.lower(), args.campus.upper())
     if args.open_only:
         params["searchType"] = "open"
-    if args.sample:
+    cache_info = None
+    if args.cached:
+        raw, coverage, cache_info = read_snapshot(load_json(ROOT / "assets" / "catalog_snapshot.json"), term, args.subject)
+        if args.keyword:
+            raw = [r for r in raw if args.keyword.casefold() in clean(
+                r["CLAS"].get("COURSETITLELONG") or r["CLAS"].get("TITLE")).casefold()]
+    elif args.sample:
         raw = fixture()["classes"]
         if args.keyword:
             raw = [r for r in raw if args.keyword.casefold() in clean(r["CLAS"].get("TITLE")).casefold()]
@@ -193,7 +206,9 @@ def search_sections(args):
     dates = [(m["start_date"], m["end_date"]) for s in matches for m in s["meetings"]
              if m["start_date"] and m["end_date"]]
     result = {"status": "ok" if matches else "no_results", "sample": args.sample,
-              "checked_at": None if args.sample else timestamp(), "term": term_label(term),
+              "checked_at": None if args.sample or args.cached else timestamp(), "term": term_label(term),
+              "data_mode": "cached" if args.cached else "sample" if args.sample else "live",
+              "live_availability_verified": not (args.sample or args.cached),
               "coverage": coverage, "matched_sections": len(matches), "display_candidates": len(display),
               "excluded_by_time_preferences": excluded, "calendar_checked": False,
               "calendar_window": {"start": min(a for a, b in dates), "end_inclusive": max(b for a, b in dates),
@@ -203,6 +218,13 @@ def search_sections(args):
                           "Cubbie must check Calendar using its existing Calendar abilities."]}
     if args.sample:
         result["caveats"].insert(0, "FICTIONAL SAMPLE: not current classes, ratings or availability.")
+    if cache_info:
+        result.update(cache_info)
+        result["caveats"].insert(0, "CACHED CATALOG: report source_checked_at; current seats, instructors and listings may have changed. Not a live check.")
+        if args.keyword:
+            result["caveats"].append("Cached keyword search matches course titles only, not full descriptions.")
+        if args.open_only:
+            result["caveats"].append("Open-only filtering used historical snapshot seat counts; current open seats are unverified.")
     if not coverage["complete"]:
         result["caveats"].append("Search coverage is capped; these are not necessarily all matching sections.")
     saved = {"format": "asu-registration-search-v1", "metadata": result,
@@ -234,6 +256,15 @@ def main(argv=None):
         args = parser().parse_args(argv)
         if args.command == "search":
             value = search_sections(args)
+        elif args.command == "refresh-snapshot":
+            subject = args.subject.upper()
+            if not re.fullmatch(r"[A-Z]{2,5}", subject):
+                raise ValueError("Provide a valid subject code.")
+            data = build_snapshot(ASUClient(), term_code(args.term), subject, args.max_pages)
+            path = ROOT / "assets" / "catalog_snapshot.json"
+            save_json(path, data)
+            value = {"status": "refreshed", "snapshot": str(path), "source_checked_at": data["source_checked_at"],
+                     "query": data["query"], "coverage": data["coverage"]}
         elif args.command == "page":
             data = load_json(args.file)
             if data.get("format") != "asu-registration-search-v1":
@@ -274,8 +305,15 @@ def main(argv=None):
                          "caveat": "Listed requirements are not a personalized eligibility or degree audit."}
         return emit(value)
     except SourceError as exc:
-        emit({"status": "source_unavailable", "message": str(exc)})
+        error = {"status": "source_unavailable", "message": str(exc),
+                 "service": exc.service, "http_status": exc.http_status}
+        if exc.http_status == 403:
+            error["next_step"] = "Use Cubbie's actual browser on the official website; do not retry blocked requests or bypass access controls. ASU search may use --cached for covered subjects, clearly labeled as historical data."
+        emit(error)
         return 3
+    except CacheMiss as exc:
+        emit({"status": "cache_miss", "message": str(exc)})
+        return 6
     except ModuleNotFoundError:
         emit({"status": "setup_required", "message": "Run the pinned package Setup commands in SKILL.md."})
         return 4
