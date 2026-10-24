@@ -29,6 +29,8 @@ Run commands from this Skill folder using `~/.local/share/venvs/asu-registration
 
 Search filters are never silently relaxed. Upstream parameters narrow where supported; explicit location, population, course, level, credits, designation and meeting preferences are checked again locally. Unknown times cannot be certified to fit.
 
+The CLI's `--keyword` maps to ASU's plural `keywords` HTTP parameter. The singular upstream parameter is silently ignored by ASU; this was verified during live checks.
+
 Discovery initially displays different courses; exact-course searches display different sections. Primary course components are retained, but the Skill does not solve linked lab/recitation enrollment rules. Do not treat a primary section alone as proof that the complete enrollment package fits.
 
 ## Another page without new network requests

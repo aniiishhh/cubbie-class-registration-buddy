@@ -142,6 +142,18 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(result["matched_sections"], 4)
         self.assertEqual(len({s["course"] for s in result["results"]}), 2)
 
+    def test_live_keyword_uses_supported_plural_parameter(self):
+        # Live ASU ignores singular 'keyword' and returns unrelated subject results.
+        client = Mock()
+        client.search.return_value = ([], {"fetched": 0, "total": 0, "pages": 1, "complete": True})
+        args = parser().parse_args(["search", "--term", "Spring 2027", "--subject", "CSE",
+                                    "--keyword", "artificial intelligence"])
+        with patch("registration.ASUClient", return_value=client):
+            search_sections(args)
+        params = client.search.call_args.args[0]
+        self.assertEqual(params["keywords"], "artificial intelligence")
+        self.assertNotIn("keyword", params)
+
     def test_open_only_excludes_closed_and_unknown_seats(self):
         result = self.search("--subject", "CSE", "--level", "upper", "--open-only")
         self.assertEqual(result["status"], "no_results")

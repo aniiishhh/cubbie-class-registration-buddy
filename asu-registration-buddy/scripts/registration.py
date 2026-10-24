@@ -155,7 +155,7 @@ def search_sections(args):
     if args.days and not allowed:
         raise ValueError("Use valid allowed days, e.g. MON,TUE,WED,THU.")
     params = {"term": term, "campusOrOnlineSelection": "O" if args.population == "asu-online" else "A"}
-    for field, key in (("subject", "subject"), ("course_number", "catalogNbr"), ("keyword", "keyword"),
+    for field, key in (("subject", "subject"), ("course_number", "catalogNbr"), ("keyword", "keywords"),
                        ("instructor", "instructorName"), ("session", "session")):
         if getattr(args, field):
             params[key] = getattr(args, field).upper() if field != "keyword" and field != "instructor" else getattr(args, field)
@@ -254,7 +254,7 @@ def main(argv=None):
             if args.command == "subjects":
                 data = fixture()["subjects"] if args.sample else ASUClient().subjects(term)
                 results = [{"code": clean(s.get("CODE")), "name": clean(s.get("DESCR"))} for s in data
-                           if args.query.casefold() in clean(s).casefold()]
+                           if args.query.casefold() in (clean(s.get("CODE")) + " " + clean(s.get("DESCR"))).casefold()]
                 value = {"status": "ok", "sample": args.sample, "term": term_label(term),
                          "matched": len(results), "results": results[:40]}
             else:
