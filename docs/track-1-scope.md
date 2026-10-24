@@ -80,7 +80,7 @@ These checks ran on this computer. Cubbie's own network/runtime and the end-to-e
 11. Include ASU search/detail links and RMP profile links, plus retrieval time and review course/date context. Verify link formats during implementation.
 12. Keep the initial result short and plain text for iMessage. Offer details on request.
 13. Cover all ASU subjects and campuses, including online. Distinguish the physical class location from the course's administrative campus and distinguish ASU Online from campus-student online classes.
-14. Check the student's connected Google Calendar alongside explicit availability preferences. Cubbie reads Calendar and passes only busy intervals to the scripts; scripts do not access Google directly. If unavailable, continue with stated preferences and label Calendar as unchecked. Report incomplete calendar coverage or unknown class times honestly.
+14. Check the student's connected Google Calendar alongside explicit availability preferences using Cubbie's existing Calendar implementation. Do not build Calendar integration or Calendar-processing code. Cubbie compares the normalized meeting dates/times with its Calendar results. If unavailable, continue with stated preferences and label Calendar as unchecked. Report incomplete calendar coverage or unknown class times honestly.
 
 If the student asks for an undefined “requirement,” distinguish a specific catalog tag or advisor-provided course list from personalized degree requirements. Ask which one they mean.
 
@@ -94,7 +94,7 @@ If the student asks for an undefined “requirement,” distinguish a specific c
 | Same-course backup section | Core | Not a claim of academic equivalence between different courses |
 | Interest-based discovery | Lightweight | Match a keyword to official titles/descriptions, then confirm scope |
 | Credit preference | Lightweight | Filter individual courses by credits or show totals of a student-selected list |
-| Calendar and supplied availability conflict checks | Core | Read Calendar through Cubbie; normalize all meeting rows, date ranges, sessions and time zones; flag incomplete coverage |
+| Calendar and supplied availability conflict checks | Core | Cubbie handles Calendar through its existing abilities; custom code only normalizes ASU meetings and filters explicit preferences |
 | Generate a complete schedule meeting a credit target | Defer | Needs combination search, component rules and robust conflict handling |
 | Recommend what the student needs to graduate | Defer | Needs degree audit, catalog year, transfer credit and authoritative requirement rules |
 | Recommend substitute courses | Defer | Needs verified equivalencies and requirement context |
