@@ -18,7 +18,7 @@ See [`docs/track-1-scope.md`](docs/track-1-scope.md) for the agreed scope and re
 
 Track 1 progress: scope agreed; Skill written; local checks passed; public repository and install link verified. The first real Cubbie trial reported ASU HTTP 403. Browser/snapshot recovery is implemented; an updated Cubbie trial and hackathon submission remain pending.
 
-For an ASU HTTP 403, ClassCue uses Cubbie's actual browser and, if needed, an explicit timestamped public-source snapshot covering Spring 2027 CSE. Cached data is not presented as a live seat or instructor-assignment check. Text the install link again after updates so Cubbie gets the fix.
+For ASU's Cloudflare challenge, ClassCue can continue without browser handoff using the complete returned Spring 2027 export: 20,316 section records across 297 ASU subjects, compressed to about 1.5 MB. RMP and Calendar can remain live. Cached catalog data is not presented as a current seat or instructor-assignment check. Text the install link again after updates so Cubbie gets the updated data and instructions.
 
 Local verification:
 

@@ -22,7 +22,7 @@ Try:
 
 Missing essentials are grouped into a short message. Optional preferences do not become an interview. Calendar access uses Cubbie's existing connection; if unavailable, the workflow continues with stated availability and marks Calendar unchecked.
 
-If ASU denies requests from Cubbie's sandbox with HTTP 403, ClassCue tries the official search in Cubbie's actual browser. If that is also unavailable, `--cached` can use a bundled, timestamped public-source snapshot of Spring 2027 CSE offerings. This is real catalog evidence, clearly labeled as cached; it does not verify current seats or promise that instructor assignments are unchanged. Other terms/subjects are not silently treated as empty. See [`references/commands.md`](references/commands.md) for scope, provenance and refresh instructions.
+If ASU denies requests from Cubbie's sandbox with HTTP 403, ClassCue can use `--cached` without any browser handoff. The bundled, timestamped export covers the complete returned Spring 2027 semester: 20,316 section records across 297 ASU subjects and all returned campus/online locations. RMP and Calendar can continue live when available. Cached catalog data does not verify current seats or unchanged instructor assignments. Other semesters are not silently treated as empty. See [`references/commands.md`](references/commands.md) for provenance and refresh instructions.
 
 ## Local quick check
 
