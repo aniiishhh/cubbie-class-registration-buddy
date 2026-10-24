@@ -306,7 +306,8 @@ def main(argv=None):
         return emit(value)
     except SourceError as exc:
         error = {"status": "source_unavailable", "message": str(exc),
-                 "service": exc.service, "http_status": exc.http_status}
+                 "service": exc.service, "http_status": exc.http_status,
+                 "response_headers": exc.response_headers}
         if exc.http_status == 403:
             error["next_step"] = "Use Cubbie's actual browser on the official website; do not retry blocked requests or bypass access controls. ASU search may use --cached for covered subjects, clearly labeled as historical data."
         emit(error)

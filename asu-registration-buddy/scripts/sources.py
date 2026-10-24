@@ -4,30 +4,43 @@ No Cubbie/Google credentials or local Class_Helper imports are needed.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 ASU_BASE = "https://eadvs-cscc-catalog-api.apps.asu.edu/catalog-microservices/api/v1"
 RMP_BASE = "https://www.ratemyprofessors.com"
 TIMEOUT = (5, 20)
 
 
 class SourceError(RuntimeError):
-    def __init__(self, message, *, service=None, http_status=None):
+    def __init__(self, message, *, service=None, http_status=None, response_headers=None):
         super().__init__(message)
         self.service = service
         self.http_status = http_status
+        self.response_headers = response_headers or {}
 
 
 def request_json(session, method, url, service, **kwargs):
     import requests
+    response = None
     try:
         response = session.request(method, url, timeout=TIMEOUT, **kwargs)
         response.raise_for_status()
         data = response.json()
     except (requests.RequestException, ValueError) as exc:
-        # Do not print headers, credentials, arbitrary response bodies or request URLs.
-        status = getattr(getattr(exc, "response", None), "status_code", None)
+        # Retain a small response-header allowlist, never request credentials,
+        # cookies, full response bodies or URLs containing arbitrary query data.
+        error_response = getattr(exc, "response", None)
+        status = getattr(error_response, "status_code", None)
+        observed = error_response if error_response is not None else response
+        headers = getattr(observed, "headers", {})
+        safe_headers = {}
+        if isinstance(headers, Mapping):
+            allowed = {"server", "via", "content-type", "cf-ray", "cf-mitigated", "retry-after"}
+            safe_headers = {str(k).lower(): " ".join(str(v).split())[:180]
+                            for k, v in headers.items() if str(k).lower() in allowed}
         detail = f"HTTP {status}" if status else type(exc).__name__
         raise SourceError(f"{service} is unavailable ({detail}); no result was inferred.",
-                          service=service, http_status=status) from None
+                          service=service, http_status=status, response_headers=safe_headers) from None
     if isinstance(data, dict) and (data.get("errors") or data.get("error")):
         raise SourceError(f"{service} returned an API error; no result was inferred.")
     return data

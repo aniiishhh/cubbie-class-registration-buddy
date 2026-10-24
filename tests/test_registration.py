@@ -334,6 +334,35 @@ class SourceTests(unittest.TestCase):
         self.assertIn("429", str(raised.exception))
         self.assertNotIn("secret", str(raised.exception))
 
+    def test_error_retains_only_safe_response_headers(self):
+        import requests
+        session = Mock()
+        response = requests.Response()
+        response.status_code = 403
+        response.headers.update({"Server": "cloudflare", "Via": "edge", "Content-Type": "text/html",
+                                 "CF-Ray": "public-request-id", "Set-Cookie": "private-cookie",
+                                 "Authorization": "private-token", "X-Private": "private-data"})
+        response._content = b"private response body"
+        session.request.return_value = response
+        with self.assertRaises(SourceError) as raised:
+            request_json(session, "GET", "https://example.invalid", "ASU")
+        error = raised.exception
+        self.assertEqual(error.http_status, 403)
+        self.assertEqual(error.response_headers, {"server": "cloudflare", "via": "edge",
+                                                 "content-type": "text/html", "cf-ray": "public-request-id"})
+        self.assertNotIn("private", json.dumps(error.response_headers))
+
+    def test_diagnostic_header_values_are_bounded(self):
+        import requests
+        session = Mock()
+        response = requests.Response()
+        response.status_code = 403
+        response.headers["Server"] = "x" * 500
+        session.request.return_value = response
+        with self.assertRaises(SourceError) as raised:
+            request_json(session, "GET", "https://example.invalid", "ASU")
+        self.assertEqual(len(raised.exception.response_headers["server"]), 180)
+
 
 class OutputTests(unittest.TestCase):
     def test_size_limit_preserves_json_and_complete_records(self):

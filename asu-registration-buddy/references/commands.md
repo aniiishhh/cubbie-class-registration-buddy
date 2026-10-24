@@ -34,7 +34,7 @@ The CLI's `--keyword` maps to ASU's plural `keywords` HTTP parameter. The singul
 
 ## HTTP 403 and explicit snapshot recovery
 
-HTTP 403 means that request was denied, not that no sections exist. Error JSON includes `service`, `http_status` and a browser/snapshot recovery hint. Try Cubbie's actual browser on the official JavaScript-powered Class Search page rather than a generic web-text fetch. For example:
+HTTP 403 means that request was denied, not that no sections exist. Error JSON includes `service`, `http_status`, safe `response_headers` (Server/Via/content type/Cloudflare request or challenge metadata/Retry-After when present), and a browser/snapshot recovery hint. Cookies, authorization headers and full response bodies are not logged. A later successful diagnostic request establishes access for that new request only: re-run the original CLI once to check its actual request/session context before concluding the live flow works. A Server value of Cloudflare by itself does not explain an earlier 403. Try Cubbie's actual browser on the official JavaScript-powered Class Search page rather than a generic web-text fetch. For example:
 
 https://catalog.apps.asu.edu/catalog/classes/classlist?t=2271&s=CSE&n=575&hon=F&promod=F&e=all
 
