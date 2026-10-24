@@ -1,0 +1,40 @@
+{
+  "notice": "Entirely fictional test data, shaped like the public ASU and RMP responses. Not current availability or real reviews.",
+  "classes": [
+    {
+      "CLAS": {"STRM":"2271","SUBJECT":"CSE","CATALOGNBR":"240","CLASSNBR":"SAMPLE-101","CLASSSECTION":"1001","CRSEID":"SAMPLE-C240","TITLE":"Sample Programming Languages","SESSIONCODE":"C","CAMPUS":"TEMPE","LOCATION":"TEMPE","INSTRUCTIONMODE":"HY","INSTRUCTORSLIST":["Alex Example"],"SSRCOMPONENT":"LEC","COMPONENTPRIMARY":"LEC","ASSOCIATEDCLASS":"1001","UNITSRANGE":"3","UNITSMINIMUM":3,"UNITSMAXIMUM":3,"DAYLIST":"T<br/>&nbsp;","STARTTIMES":["12:00 PM",null],"ENDTIMES":["1:15 PM",null],"MEETINGDATES":[["1/11/2027","4/30/2027"],["1/11/2027","4/30/2027"]],"ENRLSTAT":"O","CLASSSTAT":"A","HASACTIVERESERVEDSEATS":"Y"},
+      "DAYLIST":["T","&nbsp;"],"seatInfo":{"ENRL_CAP":50,"ENRL_TOT":30},"NOTES":["Sample reservation restriction: verify eligibility on ASU."]
+    },
+    {
+      "CLAS": {"STRM":"2271","SUBJECT":"CSE","CATALOGNBR":"240","CLASSNBR":"SAMPLE-102","CLASSSECTION":"1002","CRSEID":"SAMPLE-C240","TITLE":"Sample Programming Languages","SESSIONCODE":"C","CAMPUS":"TEMPE","LOCATION":"WEST","INSTRUCTIONMODE":"P","INSTRUCTORSLIST":["Jae Demo"],"SSRCOMPONENT":"LEC","COMPONENTPRIMARY":"LEC","ASSOCIATEDCLASS":"1002","UNITSRANGE":"3","UNITSMINIMUM":3,"UNITSMAXIMUM":3,"DAYLIST":"M W F","STARTTIMES":["9:00 AM"],"ENDTIMES":["9:50 AM"],"MEETINGDATES":[["1/11/2027","4/30/2027"]],"ENRLSTAT":"O","CLASSSTAT":"A"},
+      "seatInfo":{"ENRL_CAP":50,"ENRL_TOT":20}
+    },
+    {
+      "CLAS": {"STRM":"2271","SUBJECT":"CSE","CATALOGNBR":"240","CLASSNBR":"SAMPLE-103","CLASSSECTION":"2001","CRSEID":"SAMPLE-C240","TITLE":"Sample Programming Languages","SESSIONCODE":"A","CAMPUS":"TEMPE","LOCATION":"ASUONLINE","INSTRUCTIONMODE":"OL","INSTRUCTORSLIST":[],"SSRCOMPONENT":"LEC","COMPONENTPRIMARY":"LEC","ASSOCIATEDCLASS":"2001","UNITSRANGE":"3","STARTTIMES":[null],"ENDTIMES":[null],"MEETINGDATES":[["1/11/2027","3/2/2027"]],"ENRLSTAT":"O","CLASSSTAT":"A"},
+      "seatInfo":{"ENRL_CAP":100,"ENRL_TOT":50}
+    },
+    {
+      "CLAS": {"STRM":"2271","SUBJECT":"CSE","CATALOGNBR":"450","CLASSNBR":"SAMPLE-104","CLASSSECTION":"1001","CRSEID":"SAMPLE-C450","TITLE":"Sample Artificial Intelligence","SESSIONCODE":"C","CAMPUS":"TEMPE","LOCATION":"TEMPE","INSTRUCTIONMODE":"P","INSTRUCTORSLIST":["Alex Example"],"SSRCOMPONENT":"LEC","COMPONENTPRIMARY":"LEC","ASSOCIATEDCLASS":"1001","UNITSRANGE":"3","DAYLIST":"M W","STARTTIMES":["2:00 PM"],"ENDTIMES":["3:15 PM"],"MEETINGDATES":[["1/11/2027","4/30/2027"]],"ENRLSTAT":"O","CLASSSTAT":"A"},
+      "seatInfo":{"ENRL_CAP":40,"ENRL_TOT":40},"GSGOLD":"SCIT","GSMAROON":"SQ"
+    },
+    {
+      "CLAS": {"STRM":"2271","SUBJECT":"BIO","CATALOGNBR":"181","CLASSNBR":"SAMPLE-105","CLASSSECTION":"1001","CRSEID":"SAMPLE-B181","TITLE":"Sample Biology","SESSIONCODE":"C","CAMPUS":"TEMPE","LOCATION":"POLY","INSTRUCTIONMODE":"P","INSTRUCTORSLIST":["Morgan Fixture"],"SSRCOMPONENT":"LEC","COMPONENTPRIMARY":"LEC","ASSOCIATEDCLASS":"1001","UNITSRANGE":"4","DAYLIST":"T Th","STARTTIMES":["10:30 AM"],"ENDTIMES":["11:45 AM"],"MEETINGDATES":[["1/11/2027","4/30/2027"]],"ENRLSTAT":"O","CLASSSTAT":"A"},
+      "seatInfo":{"ENRL_CAP":60,"ENRL_TOT":30}
+    },
+    {
+      "CLAS": {"STRM":"2271","SUBJECT":"BIO","CATALOGNBR":"181","CLASSNBR":"SAMPLE-106","CLASSSECTION":"1002","CRSEID":"SAMPLE-B181","TITLE":"Sample Biology Lab","SESSIONCODE":"C","CAMPUS":"TEMPE","LOCATION":"POLY","INSTRUCTIONMODE":"P","INSTRUCTORSLIST":["Morgan Fixture"],"SSRCOMPONENT":"LAB","COMPONENTPRIMARY":"LEC","ASSOCIATEDCLASS":"1001","UNITSRANGE":"0","DAYLIST":"F","STARTTIMES":["1:00 PM"],"ENDTIMES":["3:00 PM"],"MEETINGDATES":[["1/11/2027","4/30/2027"]],"ENRLSTAT":"O","CLASSSTAT":"A"},
+      "seatInfo":{"ENRL_CAP":30,"ENRL_TOT":20}
+    }
+  ],
+  "schools":[{"id":"SAMPLE-ASU","name":"Arizona State University","city":"Tempe","state":"AZ"}],
+  "professors":[
+    {"id":"SAMPLE-TEACHER","legacyId":0,"firstName":"Alex","lastName":"Example","department":"Computer Science","avgRating":4.1,"avgDifficulty":3.5,"numRatings":20,"wouldTakeAgainPercent":75,"school":{"id":"SAMPLE-ASU","name":"Arizona State University"}},
+    {"id":"SAMPLE-OTHER","legacyId":0,"firstName":"Alex","lastName":"Unrelated","department":"English","avgRating":5,"avgDifficulty":1,"numRatings":10,"school":{"id":"SAMPLE-ASU","name":"Arizona State University"}}
+  ],
+  "reviews":[
+    {"class":"CSE240","date":"2026-10-01 12:00:00 +0000 UTC","comment":"Fictional fixture: weekly exercises helped me, but the exams needed preparation.","ratingTags":"Test heavy","difficultyRating":4,"clarityRating":4,"attendanceMandatory":"mandatory","isForOnlineClass":false},
+    {"class":"CSE450","date":"2026-10-15 12:00:00 +0000 UTC","comment":"Fictional fixture for a different course: the project took substantial time.","ratingTags":"Lots of homework","difficultyRating":4,"clarityRating":3,"attendanceMandatory":"non mandatory","isForOnlineClass":false}
+  ],
+  "subjects":[{"CODE":"CSE","DESCR":"Computer Science and Engineering"},{"CODE":"BIO","DESCR":"Biology"}],
+  "course_details":[{"DESCRLONG":"Fictional course description for testing only.","COLLEGEMAP":[{"INFO":{"ENROLLREQ":"Sample prerequisite text. This is not a real enrollment requirement."}}]}]
+}

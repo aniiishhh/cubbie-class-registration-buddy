@@ -4,8 +4,6 @@ No Cubbie/Google credentials or local Class_Helper imports are needed.
 """
 from __future__ import annotations
 
-import requests
-
 ASU_BASE = "https://eadvs-cscc-catalog-api.apps.asu.edu/catalog-microservices/api/v1"
 RMP_BASE = "https://www.ratemyprofessors.com"
 TIMEOUT = (5, 20)
@@ -16,6 +14,7 @@ class SourceError(RuntimeError):
 
 
 def request_json(session, method, url, service, **kwargs):
+    import requests
     try:
         response = session.request(method, url, timeout=TIMEOUT, **kwargs)
         response.raise_for_status()
@@ -32,6 +31,7 @@ def request_json(session, method, url, service, **kwargs):
 
 class ASUClient:
     def __init__(self):
+        import requests
         self.session = requests.Session()
         self.session.headers.update({
             "Accept": "application/json", "Authorization": "Bearer null",
@@ -73,7 +73,8 @@ class ASUClient:
                 complete = True
                 break
             next_cursor = data.get("scrollId")
-            if not next_cursor or next_cursor == cursor or not new_rows:
+            # Elasticsearch may reuse the same scroll ID across different pages.
+            if not next_cursor or not new_rows:
                 break
             cursor = next_cursor
         return rows, {"fetched": len(rows), "total": total, "total_relation": relation,
@@ -97,6 +98,7 @@ class ASUClient:
 
 class RMPClient:
     def __init__(self):
+        import requests
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0", "Accept": "application/json",

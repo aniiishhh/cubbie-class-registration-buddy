@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from html import unescape
+import math
 import re
 from urllib.parse import urlencode
 
@@ -105,7 +106,8 @@ def meetings(raw):
 
 def number(value):
     try:
-        return float(value) if value is not None and str(value).strip() else None
+        value = float(value) if value is not None and str(value).strip() else None
+        return value if value is not None and math.isfinite(value) else None
     except (ValueError, TypeError):
         return None
 
@@ -178,6 +180,8 @@ def filter_section(section, args):
         return False
     if args.course_number and section["number"].upper() != args.course_number.upper():
         return False
+    if args.instructor and not any(args.instructor.casefold() in name.casefold() for name in section["instructors"]):
+        return False
     if args.population != "all" and section["population"] != args.population:
         return False
     if args.campus and section["location"] != CAMPUSES.get(args.campus.lower(), args.campus.upper()):
@@ -207,3 +211,18 @@ def filter_section(section, args):
         if tag.upper() not in section["designations"][kind]:
             return False
     return True
+
+
+def preference_check(section, allowed_days=None, after=None, before=None):
+    conflicts, unknown = [], False
+    for meeting in section["meetings"]:
+        if meeting["status"] != "scheduled":
+            unknown = True
+        if allowed_days and meeting["days"] and not set(meeting["days"]) <= set(allowed_days):
+            conflicts.append("meets outside allowed days")
+        if after and meeting["start"] and meeting["start"] < after:
+            conflicts.append("starts before the earliest allowed time")
+        if before and meeting["end"] and meeting["end"] > before:
+            conflicts.append("ends after the latest allowed time")
+    return {"status": "conflict" if conflicts else "unknown" if unknown else "matches",
+            "reasons": sorted(set(conflicts)), "calendar_checked": False}
