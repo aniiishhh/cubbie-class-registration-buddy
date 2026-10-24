@@ -16,7 +16,9 @@ For the hackathon submission, use the [repository link](https://github.com/aniii
 
 See [`docs/track-1-scope.md`](docs/track-1-scope.md) for the agreed scope and research. The official hackathon kit is a local, ignored reference clone in `references/cubbie-hackathon-kit/`; it is not part of the published Skill.
 
-Track 1 progress: scope agreed; Skill written; local checks passed; public repository and install link verified; real Cubbie installation/Calendar test and hackathon submission pending.
+Track 1 progress: scope agreed; Skill written; local checks passed; public repository and install link verified. The first real Cubbie trial reported ASU HTTP 403. Browser/snapshot recovery is implemented; an updated Cubbie trial and hackathon submission remain pending.
+
+For an ASU HTTP 403, ClassCue uses Cubbie's actual browser and, if needed, an explicit timestamped public-source snapshot covering Spring 2027 CSE. Cached data is not presented as a live seat or instructor-assignment check. Text the install link again after updates so Cubbie gets the fix.
 
 Local verification:
 

@@ -22,6 +22,8 @@ Try:
 
 Missing essentials are grouped into a short message. Optional preferences do not become an interview. Calendar access uses Cubbie's existing connection; if unavailable, the workflow continues with stated availability and marks Calendar unchecked.
 
+If ASU denies requests from Cubbie's sandbox with HTTP 403, ClassCue tries the official search in Cubbie's actual browser. If that is also unavailable, `--cached` can use a bundled, timestamped public-source snapshot of Spring 2027 CSE offerings. This is real catalog evidence, clearly labeled as cached; it does not verify current seats or promise that instructor assignments are unchanged. Other terms/subjects are not silently treated as empty. See [`references/commands.md`](references/commands.md) for scope, provenance and refresh instructions.
+
 ## Local quick check
 
 Samples work with Python 3.10+ without network access or installed third-party packages:
@@ -29,6 +31,12 @@ Samples work with Python 3.10+ without network access or installed third-party p
 ```bash
 python3 scripts/registration.py search --sample --subject CSE --course-number 240
 python3 scripts/registration.py professor --sample --course "CSE 240"
+```
+
+Real catalog snapshot lookup, also without network or third-party packages:
+
+```bash
+python3 scripts/registration.py search --cached --term "Spring 2027" --subject CSE --course-number 575
 ```
 
 Samples are entirely fictional and cannot demonstrate live availability. For live retrieval, install `requirements.txt` in a virtual environment; Cubbie's persistent Setup commands are in `SKILL.md`. Commands and output contracts are in [`references/commands.md`](references/commands.md).
@@ -39,4 +47,4 @@ Seat counts are snapshots, not enrollment guarantees. Verify prerequisites, rese
 
 There is no full-semester optimizer, degree audit, automatic enrollment, cart modification or seat-monitoring service. Only an explicitly requested search cache of public catalog data is written, privately under HOME in the Cubbie workflow. No passwords or student API keys are needed. Live requests send course/search filters to ASU and instructor/course lookup information to RMP; do not send student identity or private Calendar details.
 
-The source clients are adapted from the participant's existing Class_Helper ASU Class Search and Rate My Professors clients; matching, errors, pagination and output handling have been tightened for a standalone Skill. [`references/testing.md`](references/testing.md) contains the real-account checklist.
+The source clients are adapted from the participant's existing Class_Helper ASU Class Search and Rate My Professors clients; matching, errors, pagination and output handling have been tightened for a standalone Skill. The public catalog snapshot contains only ASU catalog records and source metadata. [`references/testing.md`](references/testing.md) contains the real-account checklist.

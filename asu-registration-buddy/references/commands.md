@@ -26,10 +26,35 @@ Run commands from this Skill folder using `~/.local/share/venvs/asu-registration
 | `--max-pages 3` | Upstream page cap, at most 5. Incomplete coverage is reported. |
 | `--save ~/.config/asu-registration-buddy/current-search.json` | Optional private cache containing public catalog data only, not Calendar events or RMP reviews. Files are mode 600. |
 | `--sample` | Fictional offline records. No network or saved-state writes. Never use as live evidence. |
+| `--cached` | Explicit public catalog snapshot, with original retrieval time and declared semester/subject. Not a live seat check; mutually exclusive with `--sample`. |
 
 Search filters are never silently relaxed. Upstream parameters narrow where supported; explicit location, population, course, level, credits, designation and meeting preferences are checked again locally. Unknown times cannot be certified to fit.
 
 The CLI's `--keyword` maps to ASU's plural `keywords` HTTP parameter. The singular upstream parameter is silently ignored by ASU; this was verified during live checks.
+
+## HTTP 403 and explicit snapshot recovery
+
+HTTP 403 means that request was denied, not that no sections exist. Error JSON includes `service`, `http_status` and a browser/snapshot recovery hint. Try Cubbie's actual browser on the official JavaScript-powered Class Search page rather than a generic web-text fetch. For example:
+
+https://catalog.apps.asu.edu/catalog/classes/classlist?t=2271&s=CSE&n=575&hon=F&promod=F&e=all
+
+If browser access also fails, the bundled real public-source snapshot is available without network:
+
+```bash
+python scripts/registration.py search --cached --term "Spring 2027" --subject CSE --course-number 575
+```
+
+It currently covers the whole returned Spring 2027 CSE subject listing, including campus and ASU Online records. Scope, completeness, original `source_checked_at`, age and stale status are included. Records may have changed since retrieval. Never call the command's run time a new source check. Keyword filtering in this mode matches titles only. `--open-only` uses historical counts; present the results as candidates with current availability unverified.
+
+Outside the declared snapshot scope, exit 6 / `cache_miss` is returned, not a fabricated zero-result answer. Within scope, `no_results` means none in that timestamped snapshot and its applied filters; it is not a claim about today's live catalog.
+
+Maintainer refresh, from an environment with normal authorized access to the public ASU source:
+
+```bash
+python scripts/registration.py refresh-snapshot --term "Spring 2027" --subject CSE
+```
+
+This fetches an unrestricted subject listing, refuses incomplete/mismatched source results, and replaces `assets/catalog_snapshot.json` only on success. It writes public catalog data only. Commit/push the refreshed asset and text the branch link to Cubbie again to update. Do not run this as part of a student's normal search, and do not attempt to bypass network denials.
 
 Discovery initially displays different courses; exact-course searches display different sections. Primary course components are retained, but the Skill does not solve linked lab/recitation enrollment rules. Do not treat a primary section alone as proof that the complete enrollment package fits.
 
@@ -78,5 +103,6 @@ JSON is kept below 7,800 characters. Search/detail/subject result lists may be s
 - 3: source unavailable/API error; no false empty result is inferred.
 - 4: missing runtime dependency; run Setup.
 - 5: output cannot fit; narrow the request.
+- 6: explicit snapshot lookup has no coverage for the requested term/subject; use the official browser search.
 
-Only search has an optional disk write. Sample runs do not write saved state. Remove the cache when no longer needed. The scripts contain no Calendar client and never read or change Google data.
+Search has an optional private cache write; `refresh-snapshot` is a maintainer-only public snapshot write. Sample runs do not write saved state. Remove the private cache when no longer needed. The scripts contain no Calendar client and never read or change Google data.

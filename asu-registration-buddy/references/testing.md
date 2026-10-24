@@ -15,6 +15,7 @@ Local script tests cannot verify Cubbie's trigger selection, connected Calendar 
 11. Try “Find a Tempe section” on a course whose administrative campus differs from its teaching location. Cubbie must use teaching location. Check ASU Online vs iCourse distinctions too.
 12. Ask an unrelated question, such as “Write my professor an absence email.” Cubbie should use its existing relevant behavior rather than force this Skill.
 13. Push a fix when authorized and text the branch link again. Confirm the updated version runs. “What Skills do I have?” should list it. Test removal when finished if desired; the optional cache under HOME can be removed separately.
+14. If ASU returns HTTP 403, confirm that Cubbie distinguishes access failure from zero results, tries the actual rendered ASU browser page, and then uses `--cached` only with an explicit source timestamp and covered term/subject. For Spring 2027 CSE 575/510/512/572, it should compare recorded sections without requiring screenshots. CSE 512 has no returned sections in the bundled snapshot; this is a timestamped result, not a general claim that the course is never offered. A query outside snapshot coverage must not turn into a false “no classes” answer. Cached results cannot verify live seats or complete the live-data test.
 
 ## Short conversation evaluations
 

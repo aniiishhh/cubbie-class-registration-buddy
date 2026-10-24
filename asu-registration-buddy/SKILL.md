@@ -67,6 +67,25 @@ Discovery (no course code required):
 6. Search coverage is bounded. If `coverage.complete` is false, say these are the best candidates from the fetched results, not every available class. Use the saved file's `page` command to inspect further fetched candidates without another network call. A saved search is cached; refresh before relying on seats.
 7. Prefer primary course sections for the shortlist. Do not count a lab/recitation as another course or add its credits again. Required components and prerequisites must be checked on the official ASU listing; do not promise enrollment eligibility.
 
+## When ASU blocks sandbox requests (HTTP 403)
+
+A script can work on the developer's computer and fail from Cubbie's network. This is an access failure, not proof of zero sections. Do not guess instructors, keep retrying blocked requests, use proxies, or change security controls.
+
+1. Open the returned `asu_url`, or https://catalog.apps.asu.edu/catalog/classes, using Cubbie's actual browser. The ASU search page is a JavaScript application: a generic web-text lookup or a search-engine snippet is not the rendered section listing. Select the requested semester/year, subject, course and campus/population, wait for the results, and read the section rows and expanded instructor/meeting details. If no result JSON was returned, construct a course-search link using the exact semester code and course as shown in `references/commands.md`.
+2. If browser access succeeds, ground the response in those visible rows and label the check time. If the site asks the student to sign in or presents a security challenge, use the normal student takeover flow. Do not bypass it. Do not say zero sections unless the actual results page reports zero for the intended filters.
+3. If the browser is also unavailable, check the bundled public catalog snapshot explicitly:
+
+   ```bash
+   ~/.local/share/venvs/asu-registration-buddy/bin/python scripts/registration.py search --cached --term "Spring 2027" --subject CSE --course-number 575
+   ```
+
+   Repeat for each requested course. This does not contact ASU or need additional packages. The bundled snapshot currently covers Spring 2027 CSE across locations/programs only; all other searches still use live API/browser retrieval. The output enforces the snapshot's actual term/subject and reports `cache_miss` instead of inventing an empty result outside that scope.
+4. For `data_mode: cached`, say “ASU catalog snapshot checked [source_checked_at]; live access is blocked.” These are real public-source records, not the fictional `--sample` fixtures. Instructor assignments and listings may have changed. Use `source_checked_at`, never the time this cached command ran, as the source check time. State stale status when `cache_stale` is true. No cached seat count establishes current availability; `--open-only` in this mode is historical filtering only.
+5. Continue with matched professor evidence and the student's Calendar using the available section data, clearly labeling that catalog verification is cached. If RMP is blocked too, use Cubbie's actual browser on the matched profile or report reviews unavailable. Do not substitute old review authors or historical course instructors for actual section instructors.
+6. Only if both official retrieval and the covered snapshot are unavailable, explain the limitation and offer a direct official search link. Let the student optionally share the section text/screenshot; do not make uploading screenshots the default recovery workflow.
+
+The snapshot can support planning while access is blocked. It cannot complete the live seat check or prove the real Cubbie live-data flow is fixed. For refresh instructions and provenance, see `references/commands.md`.
+
 ## Calendar: use Cubbie's existing implementation
 
 Use Cubbie's existing connected Google Calendar abilities directly. There is no custom Calendar script, login or integration in this Skill, and retrieval scripts never receive the student's calendar data.
@@ -121,9 +140,10 @@ Keep calendar event titles and personal details out of the reply unless needed; 
 ## Failures and boundaries
 
 - Exit 2 / `invalid_input`: correct malformed flags from known context; if essential student information is missing, use the remaining grouped clarification round.
-- Exit 3 / `source_unavailable`: explain which source failed. ASU failure means do not invent sections; RMP failure still permits ASU recommendations with the limitation stated. Retry at most once.
+- Exit 3 / `source_unavailable`: explain which source failed. For HTTP 403 follow the browser/snapshot recovery above without retrying the blocked request; for other transient failures retry at most once. ASU failure never authorizes invented sections. RMP failure still permits ASU recommendations with the limitation stated.
 - Exit 4 / `setup_required`: repeat Setup, then retry once.
 - Exit 5 / `output_too_large`: narrow the query or request fewer reviews. Never interpret truncated evidence.
+- Exit 6 / `cache_miss`: the bundled snapshot does not cover the requested semester/subject. Use the official browser search, or explain the missing coverage; do not report zero classes.
 - `no_results`: state that no matches were found in the fetched scope, then propose a specific relaxation. Preserve hard constraints until the student agrees.
 - Samples: always identify them as fictional, never as a successful live registration check.
 - Do not provide a personalized degree audit, guarantee prerequisites or reserved-seat access, optimize a full semester to a credit total, enroll, modify a cart, send messages, or create recurring monitoring as part of this Skill. Follow a separate explicit student request before any account-changing action, and require their confirmation where applicable.

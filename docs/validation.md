@@ -7,7 +7,7 @@
 - Calendar is handled exclusively by Cubbie's existing connected abilities through Skill instructions. No Calendar client, OAuth setup, Calendar-processing code or backend was added. Calendar data is not sent to retrieval scripts or public data sources.
 - Intake gathers missing essentials in one message, permits free-form detail, and allows at most one additional grouped clarification round. Unverified RMP identities do not cause further intake interrogation.
 - Pinned `requests==2.32.5` installed successfully in a fresh project virtual environment. Offline samples also ran with `python3 -S`, with third-party site packages disabled.
-- 48 deterministic automated tests passed. They cover physical vs administrative campus, ASU Online distinctions, secondary/unknown meeting rows, weekday/time bounds, semester validation, credit/tag filters, primary components, conservative RMP identity matching, course-specific vs general evidence, pagination coverage, source errors, private cache files and valid bounded JSON output.
+- 61 deterministic automated tests passed. They cover physical vs administrative campus, ASU Online distinctions, secondary/unknown meeting rows, weekday/time bounds, semester validation, credit/tag filters, primary components, conservative RMP identity matching, course-specific vs general evidence, pagination coverage, source errors, private cache files, valid bounded JSON output and explicit snapshot provenance/coverage/staleness.
 - The official kit validator passed without structural/metadata warnings after committing the final source changes.
 - Git was initialized on `main`, and completed portions were committed incrementally. The imported kit clone, virtual environment, temporary live results and Python caches are ignored.
 - With explicit user authorization, the repository was published at https://github.com/aniiishhh/cubbie-class-registration-buddy. GitHub reports it PUBLIC with default branch `main`. The official public-link checker passed without problems or notes, and both offline sample commands succeeded from a fresh anonymous clone.
@@ -33,6 +33,10 @@ An important live finding was corrected: ASU silently ignores a singular `keywor
 The generated ASU course-search link returned HTTP 200. The canonical RMP profile URL is constructed from the returned legacy professor ID; a plain automated page request received HTTP 403 even while the public GraphQL retrieval succeeded. Do not describe automated profile-page viewing as verified. The student can follow the source link, and browser access must respect the site's access controls.
 
 ## Not yet verified
+
+The first real Cubbie trial reported HTTP 403 from the ASU live search and no section listings from an alternate web lookup. The same queries succeed locally, so the precise sandbox/browser/network cause is still unconfirmed. This is a failed live-data test; the earlier local successes do not establish success on Cubbie.
+
+Recovery now instructs Cubbie to use its actual browser for the JavaScript ASU search page, then an explicit offline snapshot if needed. The bundled snapshot was fetched through the normal public ASU API at `2026-10-24T22:57:27+00:00`, with complete coverage of 222 Spring 2027 CSE section records. It contains real public catalog records, separate from the fictional samples. The script preserves source time, reports age/staleness and scope, labels current availability unverified, and distinguishes cache misses from covered zero-result searches. Maintainer refresh refuses incomplete results. It is not a proxy or a fix to Cubbie's network access.
 
 - Installation and pinned package setup inside the actual Cubbie sandbox.
 - Trigger selection and concise replies in a real iMessage conversation.
