@@ -6,7 +6,13 @@ Supports known course codes and discovery from a subject or interest, across all
 
 ## Install on Cubbie
 
-Once this repository is public, text Cubbie the GitHub link to this folder and approve installation. Cubbie reads [`SKILL.md`](SKILL.md) and runs its pinned Setup commands. Start a new message to try it. Text the branch/folder link again after a pushed update.
+Text this link to Cubbie and approve installation:
+
+```text
+https://github.com/aniiishhh/cubbie-class-registration-buddy/tree/main/asu-registration-buddy
+```
+
+Cubbie reads [`SKILL.md`](SKILL.md) and runs its pinned Setup commands. Start a new message to try it. Text the same branch/folder link again after a pushed update.
 
 Try:
 
