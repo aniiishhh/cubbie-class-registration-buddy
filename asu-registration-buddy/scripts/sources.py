@@ -5,6 +5,7 @@ No Cubbie/Google credentials or local Class_Helper imports are needed.
 from __future__ import annotations
 
 from collections.abc import Mapping
+import time
 
 ASU_BASE = "https://eadvs-cscc-catalog-api.apps.asu.edu/catalog-microservices/api/v1"
 RMP_BASE = "https://www.ratemyprofessors.com"
@@ -56,7 +57,7 @@ class ASUClient:
             "User-Agent": "Mozilla/5.0 ASURegistrationBuddy/1.0",
         })
 
-    def search(self, params, max_pages=3):
+    def search(self, params, max_pages=3, page_delay=0):
         query = {"campusOrOnlineSelection": "A", "honors": "F", "promod": "F",
                  "searchType": "all", "refine": "Y", **params}
         rows, seen, cursor = [], set(), None
@@ -94,6 +95,8 @@ class ASUClient:
             if not next_cursor or not new_rows:
                 break
             cursor = next_cursor
+            if page_delay:
+                time.sleep(page_delay)
         return rows, {"fetched": len(rows), "total": total, "total_relation": relation,
                       "pages": pages, "complete": complete}
 

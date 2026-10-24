@@ -15,7 +15,7 @@ from catalog import (CAMPUSES, clean, clock, day_codes, filter_section, normaliz
                      preference_check, term_code, term_label)
 from professors import professor_evidence
 from sources import ASUClient, RMPClient, SourceError
-from snapshots import CacheMiss, build_snapshot, read_snapshot
+from snapshots import CacheMiss, build_snapshot, load_snapshot, read_snapshot, write_snapshot
 
 ROOT = Path(__file__).resolve().parent.parent
 MAX_OUTPUT = 7800
@@ -101,10 +101,10 @@ def parser():
     mode = search.add_mutually_exclusive_group()
     mode.add_argument("--sample", action="store_true")
     mode.add_argument("--cached", action="store_true", help="Explicit bundled public snapshot; never a live seat check.")
-    refresh = sub.add_parser("refresh-snapshot", help="Maintainer command: refresh a complete public subject snapshot.")
+    refresh = sub.add_parser("refresh-snapshot", help="Maintainer command: refresh a complete public semester or subject snapshot.")
     refresh.add_argument("--term", required=True)
-    refresh.add_argument("--subject", required=True)
-    refresh.add_argument("--max-pages", type=bounded_int(1, 20), default=10)
+    refresh.add_argument("--subject", help="Optional subject; omit to export the full semester across ASU.")
+    refresh.add_argument("--max-pages", type=bounded_int(1, 250), default=150)
     page = sub.add_parser("page", help="Read another page from a saved search.")
     page.add_argument("--file", required=True)
     page.add_argument("--offset", type=bounded_int(0, 10000), default=0)
@@ -174,7 +174,7 @@ def search_sections(args):
         params["searchType"] = "open"
     cache_info = None
     if args.cached:
-        raw, coverage, cache_info = read_snapshot(load_json(ROOT / "assets" / "catalog_snapshot.json"), term, args.subject)
+        raw, coverage, cache_info = read_snapshot(load_snapshot(ROOT / "assets" / "catalog_snapshot.json.gz"), term, args.subject)
         if args.keyword:
             raw = [r for r in raw if args.keyword.casefold() in clean(
                 r["CLAS"].get("COURSETITLELONG") or r["CLAS"].get("TITLE")).casefold()]
@@ -257,12 +257,17 @@ def main(argv=None):
         if args.command == "search":
             value = search_sections(args)
         elif args.command == "refresh-snapshot":
-            subject = args.subject.upper()
-            if not re.fullmatch(r"[A-Z]{2,5}", subject):
+            subject = args.subject.upper() if args.subject else None
+            if subject and not re.fullmatch(r"[A-Z]{2,5}", subject):
                 raise ValueError("Provide a valid subject code.")
             data = build_snapshot(ASUClient(), term_code(args.term), subject, args.max_pages)
-            path = ROOT / "assets" / "catalog_snapshot.json"
-            save_json(path, data)
+            path = ROOT / "assets" / "catalog_snapshot.json.gz"
+            write_snapshot(path, data)
+            manifest = {k: v for k, v in data.items() if k != "classes"}
+            manifest.update({"snapshot_file": path.name, "record_count": len(data["classes"]),
+                             "subject_count": len({r["CLAS"]["SUBJECT"] for r in data["classes"]}),
+                             "compressed_bytes": path.stat().st_size})
+            save_json(ROOT / "assets" / "catalog_manifest.json", manifest)
             value = {"status": "refreshed", "snapshot": str(path), "source_checked_at": data["source_checked_at"],
                      "query": data["query"], "coverage": data["coverage"]}
         elif args.command == "page":
@@ -309,7 +314,8 @@ def main(argv=None):
                  "service": exc.service, "http_status": exc.http_status,
                  "response_headers": exc.response_headers}
         if exc.http_status == 403:
-            error["next_step"] = "Use Cubbie's actual browser on the official website; do not retry blocked requests or bypass access controls. ASU search may use --cached for covered subjects, clearly labeled as historical data."
+            error["error_code"] = "browser_challenge" if exc.response_headers.get("cf-mitigated", "").lower() == "challenge" else "access_denied"
+            error["next_step"] = "Do not retry or bypass the denied request. For ASU searches use --cached for a covered semester, with its original source timestamp and current availability unverified. Browser handoff is optional only if actually available, not a required recovery step."
         emit(error)
         return 3
     except CacheMiss as exc:

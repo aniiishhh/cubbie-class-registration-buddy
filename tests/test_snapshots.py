@@ -4,6 +4,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import io
 import json
+import tempfile
 from pathlib import Path
 import sys
 import unittest
@@ -11,7 +12,7 @@ from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "asu-registration-buddy" / "scripts"))
 from registration import fixture, main, parser, search_sections
-from snapshots import FORMAT, CacheMiss, build_snapshot, read_snapshot
+from snapshots import FORMAT, CacheMiss, build_snapshot, load_snapshot, read_snapshot, write_snapshot
 from sources import SourceError
 
 
@@ -26,7 +27,7 @@ def snapshot():
 class SnapshotTests(unittest.TestCase):
     def search(self, data, *flags):
         args = parser().parse_args(["search", "--cached", "--term", "Spring 2027", "--subject", "CSE", *flags])
-        with patch("registration.load_json", return_value=data), patch("registration.ASUClient") as client:
+        with patch("registration.load_snapshot", return_value=data), patch("registration.ASUClient") as client:
             result = search_sections(args)
             client.assert_not_called()
         return result
@@ -114,6 +115,80 @@ class SnapshotTests(unittest.TestCase):
         self.assertEqual(result["http_status"], 403)
         self.assertIn("--cached", result["next_step"])
         self.assertEqual(client.search.call_count, 1)
+
+    def test_full_semester_snapshot_supports_other_subjects(self):
+        data = snapshot()
+        del data["query"]["subject"]
+        data["classes"].extend(fixture()["classes"][4:])
+        args = parser().parse_args(["search", "--cached", "--term", "Spring 2027", "--subject", "BIO"])
+        with patch("registration.load_snapshot", return_value=data):
+            result = search_sections(args)
+        self.assertTrue(result["all_subjects"])
+        self.assertEqual(result["snapshot_subject_count"], 2)
+        self.assertEqual(result["matched_sections"], 1)
+        self.assertEqual(result["results"][0]["course"], "BIO 181")
+
+    def test_full_snapshot_allows_discovery_without_a_subject(self):
+        data = snapshot()
+        del data["query"]["subject"]
+        args = parser().parse_args(["search", "--cached", "--term", "Spring 2027", "--keyword", "intelligence"])
+        with patch("registration.load_snapshot", return_value=data):
+            result = search_sections(args)
+        self.assertEqual(result["results"][0]["course"], "CSE 450")
+
+    def test_full_snapshot_still_rejects_a_different_semester(self):
+        data = snapshot()
+        del data["query"]["subject"]
+        with self.assertRaises(CacheMiss):
+            read_snapshot(data, "2267", "BIO")
+
+    def test_compressed_snapshot_round_trip(self):
+        data = snapshot()
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "catalog.json.gz"
+            write_snapshot(path, data)
+            self.assertEqual(load_snapshot(path), data)
+            self.assertEqual(list(Path(folder).iterdir()), [path])
+
+    def test_corrupt_compressed_snapshot_is_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "catalog.json.gz"
+            path.write_bytes(b"not gzip")
+            with self.assertRaises(OSError):
+                load_snapshot(path)
+
+    def test_whole_semester_refresh_preserves_other_subjects(self):
+        client = Mock()
+        records = fixture()["classes"]
+        client.search.return_value = (records, {"complete": True, "total": len(records)})
+        data = build_snapshot(client, "2271")
+        self.assertNotIn("subject", data["query"])
+        self.assertEqual({r["CLAS"]["SUBJECT"] for r in data["classes"]}, {"CSE", "BIO"})
+
+    def test_only_explicit_challenge_header_identifies_browser_challenge(self):
+        for headers, expected in [({"server": "cloudflare"}, "access_denied"),
+                                  ({"server": "cloudflare", "cf-mitigated": "challenge"}, "browser_challenge")]:
+            client = Mock()
+            client.search.side_effect = SourceError("Denied", service="ASU", http_status=403, response_headers=headers)
+            output = io.StringIO()
+            with patch("registration.ASUClient", return_value=client), redirect_stdout(output):
+                code = main(["search", "--term", "Spring 2027", "--subject", "CSE"])
+            result = json.loads(output.getvalue())
+            self.assertEqual(code, 3)
+            self.assertEqual(result["error_code"], expected)
+            self.assertIn("--cached", result["next_step"])
+
+    def test_failed_atomic_write_preserves_previous_export(self):
+        original = snapshot()
+        changed = deepcopy(original)
+        changed["source_checked_at"] = datetime.now(timezone.utc).isoformat()
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "catalog.json.gz"
+            write_snapshot(path, original)
+            with patch("snapshots.os.replace", side_effect=OSError("simulated write failure")), self.assertRaises(OSError):
+                write_snapshot(path, changed)
+            self.assertEqual(load_snapshot(path), original)
+            self.assertEqual(list(Path(folder).iterdir()), [path])
 
 
 if __name__ == "__main__":
