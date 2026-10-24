@@ -10,6 +10,7 @@
 - 48 deterministic automated tests passed. They cover physical vs administrative campus, ASU Online distinctions, secondary/unknown meeting rows, weekday/time bounds, semester validation, credit/tag filters, primary components, conservative RMP identity matching, course-specific vs general evidence, pagination coverage, source errors, private cache files and valid bounded JSON output.
 - The official kit validator passed without structural/metadata warnings after committing the final source changes.
 - Git was initialized on `main`, and completed portions were committed incrementally. The imported kit clone, virtual environment, temporary live results and Python caches are ignored.
+- With explicit user authorization, the repository was published at https://github.com/aniiishhh/cubbie-class-registration-buddy. GitHub reports it PUBLIC with default branch `main`. The official public-link checker passed without problems or notes, and both offline sample commands succeeded from a fresh anonymous clone.
 
 ## Live read-only checks
 
@@ -37,12 +38,16 @@ The generated ASU course-search link returned HTTP 200. The canonical RMP profil
 - Trigger selection and concise replies in a real iMessage conversation.
 - Cubbie's use of its existing Calendar implementation over the full section date range, including recurrences, time zones, free/busy status, incomplete coverage and disconnected-account fallback.
 - A real same-course backup exchange after a seat recheck.
-- A public repository install link, pushed-commit verification, and hackathon submission/gallery confirmation.
+- Hackathon submission/gallery confirmation.
 
-Local tests validate the data layer, not Cubbie's private abilities. These remaining checks require the public install link and the team's Cubbie account. Use the numbered checklist in `asu-registration-buddy/references/testing.md`.
+Local tests validate the data layer, not Cubbie's private abilities. Use the verified public install link with the team's Cubbie account and follow the numbered checklist in `asu-registration-buddy/references/testing.md`.
 
-## Proposed publishing package
+## Published package
 
-Publish this repository with the Skill folder, project README, tests and scope/validation notes. The official reference kit, `.venv`, `.env`, Python caches and `tmp/` live-check files are excluded by `.gitignore`. No student Calendar data or student credentials are included.
+The public repository contains the Skill folder, project README, tests and scope/validation notes. The official reference kit, `.venv`, `.env`, Python caches and `tmp/` live-check files are excluded by `.gitignore`. No student Calendar data or student credentials are included.
 
-Once publishing is authorized, create or select the public GitHub repository, push `main`, run the kit's public-link checker, and text the resulting branch/folder link to Cubbie for the real-account test. Submit the repository link only after reviewing the public entry and obtaining the required confirmation.
+Text this branch/folder link to Cubbie for the real-account test:
+
+https://github.com/aniiishhh/cubbie-class-registration-buddy/tree/main/asu-registration-buddy
+
+Submit the repository link only after reviewing the public entry and obtaining the required confirmation.

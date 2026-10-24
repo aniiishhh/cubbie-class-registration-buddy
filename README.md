@@ -16,7 +16,7 @@ For the hackathon submission, use the [repository link](https://github.com/aniii
 
 See [`docs/track-1-scope.md`](docs/track-1-scope.md) for the agreed scope and research. The official hackathon kit is a local, ignored reference clone in `references/cubbie-hackathon-kit/`; it is not part of the published Skill.
 
-Track 1 progress: scope agreed; Skill written; local checks passed; public repository created; real Cubbie installation/Calendar test and hackathon submission pending.
+Track 1 progress: scope agreed; Skill written; local checks passed; public repository and install link verified; real Cubbie installation/Calendar test and hackathon submission pending.
 
 Local verification:
 
