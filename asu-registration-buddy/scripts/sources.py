@@ -126,7 +126,10 @@ class RMPClient:
           }}
         }""", {"query": "Arizona State University"})
         try:
-            return [edge["node"] for edge in data["newSearch"]["schools"]["edges"]]
+            nodes = [edge["node"] for edge in data["newSearch"]["schools"]["edges"]]
+            if not all(isinstance(node, dict) and node.get("id") and node.get("name") for node in nodes):
+                raise TypeError
+            return nodes
         except (KeyError, TypeError):
             raise SourceError("Rate My Professors school search changed format.") from None
 
@@ -146,8 +149,10 @@ class RMPClient:
                 page = data["search"]["teachers"]
                 for edge in page["edges"]:
                     node = edge["node"]
+                    if not isinstance(node, dict) or not node.get("id") or not str(node.get("legacyId", "")).isdigit():
+                        raise TypeError
                     # The source's school filter is verified again before attaching evidence.
-                    if node.get("school", {}).get("id") == school_id:
+                    if isinstance(node.get("school"), dict) and node["school"].get("id") == school_id:
                         results[node["id"]] = node
                 info = page["pageInfo"]
                 if not info.get("hasNextPage"):

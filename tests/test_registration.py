@@ -16,7 +16,7 @@ sys.path.insert(0, str(SCRIPTS))
 from catalog import clean, clock, day_codes, normalize, number, preference_check, term_code
 from professors import professor_evidence
 from registration import SampleRMP, emit, fixture, main, parser, save_json, search_sections
-from sources import ASUClient, SourceError, request_json
+from sources import ASUClient, RMPClient, SourceError, request_json
 
 
 class CatalogTests(unittest.TestCase):
@@ -173,6 +173,11 @@ class SearchTests(unittest.TestCase):
         self.assertEqual(self.search("--designation", "gold:SCIT")["matched_sections"], 1)
         self.assertEqual(self.search("--designation", "maroon:SCIT")["matched_sections"], 0)
 
+    def test_session_code_is_case_insensitive(self):
+        result = self.search("--subject", "CSE", "--session", "a")
+        self.assertEqual(result["matched_sections"], 1)
+        self.assertEqual(result["results"][0]["session"], "A")
+
     def test_samples_do_not_write_student_state(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "state.json"
@@ -312,6 +317,12 @@ class SourceTests(unittest.TestCase):
         with self.assertRaises(SourceError) as raised:
             request_json(session, "POST", "https://example.invalid", "RMP")
         self.assertNotIn("sensitive", str(raised.exception))
+
+    def test_malformed_school_response_is_a_source_error(self):
+        client = object.__new__(RMPClient)
+        client.graphql = Mock(return_value={"newSearch": {"schools": {"edges": [{"node": None}]}}})
+        with self.assertRaises(SourceError):
+            client.schools()
 
     def test_http_errors_do_not_expose_request_details(self):
         import requests

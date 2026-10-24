@@ -142,6 +142,8 @@ def search_sections(args):
         raise ValueError("Use a subject code such as CSE; subjects --query can look up names.")
     if args.course_number and (not args.subject or not re.fullmatch(r"\d{3}[A-Za-z]?", args.course_number)):
         raise ValueError("A course number needs a subject and three digits, optionally a suffix; use --level for a range.")
+    if args.session:
+        args.session = args.session.upper()
     if args.designation and not re.fullmatch(r"(?:gold|maroon|other):[A-Za-z0-9]+", args.designation):
         raise ValueError("Specify a designation as gold:CODE, maroon:CODE or other:CODE.")
     if any(v is not None and (not math.isfinite(v) or v < 0 or v > 30) for v in (args.min_credits, args.max_credits)):
@@ -180,7 +182,7 @@ def search_sections(args):
             excluded += 1
             continue
         matches.append(section)
-    matches.sort(key=lambda s: (s["open_seats"] is None or s["open_seats"] <= 0 or s["enrollment_status"] != "O",
+    matches.sort(key=lambda s: (s["open_seats"] is None or s["open_seats"] <= 0 or s["enrollment_status"] != "O" or s["class_status"] != "A",
                                 s["preference_check"]["status"] == "unknown"))
     # Discovery initially shows different courses; keep every section in the saved file.
     display, seen = [], set()

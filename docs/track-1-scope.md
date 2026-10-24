@@ -1,6 +1,6 @@
 # ASU Registration Buddy — Track 1 scope
 
-Status: approved scope; implementation in progress.
+Status: approved scope; local implementation and checks complete. Public GitHub publishing, real Cubbie testing and submission remain pending.
 Research date: October 24, 2026 (America/Phoenix).
 
 ## Recommendation
