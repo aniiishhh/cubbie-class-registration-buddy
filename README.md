@@ -1,4 +1,4 @@
-# ASU Registration Buddy
+# ClassCue
 
 A Cubbie Skill for finding ASU classes, comparing sections with grounded Rate My Professors evidence, checking Calendar availability, and keeping a same-course backup ready.
 

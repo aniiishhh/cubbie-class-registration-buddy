@@ -1,4 +1,4 @@
-# ASU Registration Buddy
+# ClassCue
 
 Registration research in a Cubbie text conversation: find ASU courses or sections, filter by time/campus/credits, compare matched professor reviews, check fit through Cubbie's existing Calendar abilities, and keep a same-course backup ready.
 

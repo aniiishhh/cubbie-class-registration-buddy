@@ -1,10 +1,10 @@
 ---
 name: asu-registration-buddy
-description: Finds ASU classes, compares sections with professor-review evidence, checks fit using Cubbie's Calendar, and suggests a backup. Use for ASU registration, course or elective discovery, semester and campus searches, section timing, professor comparisons, credit preferences, or a class filling up. Accept requests with a known course code or just a subject or interest. Supports all ASU subjects and campuses, ASU Online and campus-student online offerings.
+description: ClassCue finds ASU classes, compares sections with professor-review evidence, checks fit using Cubbie's Calendar, and suggests a backup. Use for ASU registration, course or elective discovery, semester and campus searches, section timing, professor comparisons, credit preferences, or a class filling up. Accept requests with a known course code or just a subject or interest. Supports all ASU subjects and campuses, ASU Online and campus-student online offerings.
 compatibility: Python 3.10+; requests 2.32.5 for live public-source retrieval. Calendar uses Cubbie's existing connected abilities.
 ---
 
-# ASU Registration Buddy
+# ClassCue
 
 Help the student choose an ASU class or section using current ASU listings and matched Rate My Professors (RMP) evidence. Check their preferences and connected Calendar, explain tradeoffs, and identify a same-course backup. Keep the conversation efficient.
 

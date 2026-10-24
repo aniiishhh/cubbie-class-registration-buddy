@@ -1,4 +1,4 @@
-# ASU Registration Buddy — Track 1 scope
+# ClassCue — Track 1 scope
 
 Status: approved scope; local implementation and checks complete. Public repository: https://github.com/aniiishhh/cubbie-class-registration-buddy. Real Cubbie testing and hackathon submission remain pending.
 Research date: October 24, 2026 (America/Phoenix).
