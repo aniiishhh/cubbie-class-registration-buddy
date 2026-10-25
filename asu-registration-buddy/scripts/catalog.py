@@ -13,6 +13,27 @@ CAMPUSES = {"tempe": "TEMPE", "poly": "POLY", "polytechnic": "POLY",
             "downtown phoenix": "DTPHX", "mesa": "MESACITYCR"}
 
 
+def class_search_url(term, subject, catalog, class_number=None, course_id=None, population="all"):
+    """ASU's current UI query keys and its own section-expansion fragment."""
+    landing = "https://catalog.apps.asu.edu/catalog/classes"
+    try:
+        term = term_code(term)
+    except ValueError:
+        return landing
+    subject, catalog = clean(subject).upper(), clean(catalog).upper()
+    if not re.fullmatch(r"[A-Z]{2,5}", subject) or not re.fullmatch(r"\d{3}[A-Z]?", catalog):
+        return landing
+    params = {"campusOrOnlineSelection": "O" if population == "asu-online" else "A",
+              "honors": "F", "promod": "F", "searchType": "all",
+              "subject": subject, "catalogNbr": catalog, "term": term}
+    url = landing + "/classlist?" + urlencode(params)
+    if class_number is not None and course_id is not None:
+        number, identity = clean(class_number), clean(course_id)
+        if number.isascii() and identity.isascii() and number.isdigit() and identity.isdigit():
+            url += f"#detailsOpen={number}-{identity}"
+    return url
+
+
 def clean(value):
     if value is None:
         return ""
@@ -170,8 +191,10 @@ def normalize(raw):
         "associated_class": clean(cl.get("ASSOCIATEDCLASS")),
         "meetings": meetings(raw), "meeting_timezone": "America/Phoenix",
         "designations": tags, "notes": notes[:3],
-        "asu_url": "https://catalog.apps.asu.edu/catalog/classes/classlist?" + urlencode({
-            "t": term, "s": subject, "n": catalog, "hon": "F", "promod": "F", "e": "all"}),
+        "asu_url": class_search_url(term, subject, catalog, class_number, clean(cl.get("CRSEID")),
+                                    "asu-online" if location == "ASUONLINE" else "all"),
+        "asu_search_url": class_search_url(term, subject, catalog,
+                                           population="asu-online" if location == "ASUONLINE" else "all"),
     }
 
 

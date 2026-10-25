@@ -185,29 +185,57 @@ class RMPClient:
                 raise SourceError("Rate My Professors professor search changed format.") from None
         return list(results.values()), complete
 
-    def reviews(self, teacher_id, max_pages=2):
+    def reviews(self, teacher_id, max_pages=250, time_budget=60):
         query = """query($id: ID!, $count: Int!, $cursor: String!) {
-          node(id: $id) {... on Teacher {
+          node(id: $id) {... on Teacher {numRatings
             ratings(first: $count, after: $cursor) {
-              edges {node {comment ratingTags date class helpfulRating clarityRating
+              edges {node {id comment ratingTags date class helpfulRating clarityRating
                 difficultyRating grade attendanceMandatory wouldTakeAgain isForOnlineClass}}
               pageInfo {hasNextPage endCursor}
             }
           }}
         }"""
         results, cursor, complete = [], "", False
+        started = time.monotonic()
+        coverage = {"pages_fetched": 0, "stop_reason": "page_limit", "reported_total": None}
+        self.last_review_coverage = coverage
+        seen_cursors = set()
         for _ in range(max_pages):
-            data = self.graphql(query, {"id": teacher_id, "count": 20, "cursor": cursor})
+            if time.monotonic() - started >= time_budget:
+                coverage["stop_reason"] = "time_budget"
+                break
             try:
+                data = self.graphql(query, {"id": teacher_id, "count": 20, "cursor": cursor})
                 page = data["node"]["ratings"]
-                results.extend(edge["node"] for edge in page["edges"])
+                if not isinstance(page["edges"], list):
+                    raise TypeError
+                nodes = [edge["node"] for edge in page["edges"]]
                 info = page["pageInfo"]
+                if (not all(isinstance(node, dict) for node in nodes)
+                        or not isinstance(info, dict) or not isinstance(info.get("hasNextPage"), bool)):
+                    raise TypeError
+                results.extend(nodes)
+                coverage["pages_fetched"] += 1
+                coverage["reported_total"] = data["node"].get("numRatings", coverage["reported_total"])
                 if not info.get("hasNextPage"):
                     complete = True
+                    coverage["stop_reason"] = "complete"
                     break
-                if not info.get("endCursor") or info["endCursor"] == cursor:
+                next_cursor = info.get("endCursor")
+                if not next_cursor or next_cursor in seen_cursors or not nodes:
+                    coverage["stop_reason"] = "pagination_stalled"
                     break
-                cursor = info["endCursor"]
+                seen_cursors.add(next_cursor)
+                cursor = next_cursor
+            except SourceError:
+                if not results:
+                    raise
+                coverage["stop_reason"] = "source_error"
+                break
             except (KeyError, TypeError):
-                raise SourceError("Rate My Professors reviews changed format.") from None
+                if not results:
+                    raise SourceError("Rate My Professors reviews changed format.") from None
+                coverage["stop_reason"] = "format_error"
+                break
+        coverage.update({"complete": complete, "elapsed_seconds": round(time.monotonic() - started, 2)})
         return results, complete

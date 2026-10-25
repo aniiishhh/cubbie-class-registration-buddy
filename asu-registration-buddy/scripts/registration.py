@@ -26,10 +26,10 @@ class Parser(argparse.ArgumentParser):
         raise ValueError(message)
 
 
-def load_json(path):
+def load_json(path, max_bytes=2_000_000):
     path = Path(path).expanduser()
-    if path.stat().st_size > 2_000_000:
-        raise ValueError("Input JSON is too large (maximum 2 MB).")
+    if path.stat().st_size > max_bytes:
+        raise ValueError(f"Input JSON exceeds the {max_bytes}-byte limit.")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -127,7 +127,14 @@ def parser():
     prof.add_argument("--teacher-id", help="Only use after confirming a candidate returned by this name search.")
     prof.add_argument("--max-pages", type=bounded_int(1, 3), default=2)
     prof.add_argument("--max-reviews", type=bounded_int(1, 6), default=4)
+    prof.add_argument("--review-pages", type=bounded_int(1, 500), default=250,
+                      help="Review page budget; fetch until exhausted, with a 60-second retrieval budget.")
+    prof.add_argument("--save-reviews", help="Private full-text corpus for Cubbie to read in batches.")
     prof.add_argument("--sample", action="store_true")
+    reviews = sub.add_parser("review-page", help="Read full review text from a private corpus, without network.")
+    reviews.add_argument("--file", required=True)
+    reviews.add_argument("--offset", type=bounded_int(0, 20000), default=0)
+    reviews.add_argument("--limit", type=bounded_int(1, 20), default=10)
     return result
 
 
@@ -279,14 +286,29 @@ def main(argv=None):
                           "saved_file": str(Path(args.file).expanduser()), "cached": True})
             value["caveats"] = value["caveats"] + ["Cached search: re-run live search before relying on seats."]
         elif args.command == "professor":
+            if args.sample and args.save_reviews:
+                raise ValueError("Sample mode never writes real review corpora; omit --save-reviews.")
             name = args.name or ("Alex Example" if args.sample else "")
             if not name.strip():
                 raise ValueError("Provide the instructor's name from the ASU listing.")
             value = professor_evidence(SampleRMP() if args.sample else RMPClient(), name, args.course,
-                                       args.campus, args.school_id, args.teacher_id, args.max_pages, args.max_reviews)
+                                       args.campus, args.school_id, args.teacher_id, args.max_pages, args.max_reviews,
+                                       args.review_pages, bool(args.save_reviews))
             value.update({"sample": args.sample, "checked_at": None if args.sample else timestamp()})
+            corpus = value.pop("review_corpus", None)
+            if corpus is not None:
+                corpus["checked_at"] = value["checked_at"]
+                save_json(args.save_reviews, corpus)
+                value["reviews_file"] = str(Path(args.save_reviews).expanduser())
             if args.sample:
                 value["caveats"].insert(0, "FICTIONAL SAMPLE: not real professor evidence.")
+        elif args.command == "review-page":
+            corpus = load_json(args.file, max_bytes=32_000_000)
+            if corpus.get("format") != "classcue-rmp-reviews-v1" or not isinstance(corpus.get("reviews"), list):
+                raise ValueError("Expected a ClassCue review corpus.")
+            value = {"status": "ok", "professor": corpus["professor"], "coverage": corpus["coverage"],
+                     "total_reviews": len(corpus["reviews"]), "checked_at": corpus.get("checked_at"),
+                     "offset": args.offset, "results": corpus["reviews"][args.offset:args.offset + args.limit]}
         else:
             term = term_code(args.term or ("Spring 2027" if args.sample else ""))
             if args.command == "subjects":
