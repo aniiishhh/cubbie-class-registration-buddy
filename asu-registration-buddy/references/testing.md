@@ -1,35 +1,38 @@
-# Real Cubbie test checklist
+# Acceptance checks
 
-Local script tests cannot verify Cubbie's trigger selection, connected Calendar implementation or iMessage replies. Finish these checks on a real Cubbie account before marking the main flow complete.
+Use these to verify the installed Skill after an update. Fixtures establish command behavior; real source and Calendar checks establish the student experience. Never report a test as passed merely because it is listed here.
 
-1. Text the public branch/folder link. Cubbie should explain the third-party Skill and ask before installation. Approve; Setup should run. Start a new message after install so the Skill appears in its list.
-2. Text: “Help me pick classes.” Expect ONE short grouped intake covering missing semester/year, course or subject/interest, and relevant campus/ASU Online distinction. Optional preferences are welcomed, not individually required.
-3. Reply with semester, subject, campus and preferences in one message. Cubbie should use them without repeating questions. If an essential is absent, it gets at most one grouped follow-up. No course code is required for discovery.
-4. Text a complete known-course request, for example “Compare CSE 240 sections for Spring 2027. I'm a Tempe campus student, no classes before 10.” Expect live sections, Phoenix-local time filtering, correct physical location, seat-check time and source links. Do not use the sample fixture for this check.
-5. With Calendar connected, put or identify a real busy event that overlaps a returned meeting during the actual section dates. Cubbie should use its existing Calendar abilities, identify that conflict and prefer another section. Check recurring events, the full session range, timezone conversion and any linked-component/unknown-time caveats. The Skill must not install a Calendar client or change events.
-6. Check a section whose session dates do not overlap a Calendar event; it should not be rejected solely because its weekday/time matches outside the session. For a partial Calendar read, Cubbie must state the checked range rather than claim complete freedom from conflicts.
-7. With Calendar unavailable, repeat the request. Cubbie should continue from explicit preferences and say Calendar was not checked, without a setup questionnaire.
-8. Text “Find a three-credit upper-division CSE elective related to AI for Spring 2027.” Expect bounded discovery, different candidate courses where available, descriptions supporting interest relevance, and no claim that these fulfill personalized degree requirements. If “AI” has no literal matches, propose a broader catalog keyword.
-9. Compare instructors. Check one RMP profile and review against the linked page: name/school/department, overall rating count, course-specific vs general evidence, review dates and bounded sample disclosure. An unresolved identity or missing profile must not produce invented ratings.
-10. Ask “What if that section fills?” Expect a different section of the same course with a fresh live seat check and Calendar/preferences check. If no suitable backup exists, say so; do not invent a substitute course or ignore a time constraint.
-11. Try “Find a Tempe section” on a course whose administrative campus differs from its teaching location. Cubbie must use teaching location. Check ASU Online vs iCourse distinctions too.
-12. Ask an unrelated question, such as “Write my professor an absence email.” Cubbie should use its existing relevant behavior rather than force this Skill.
-13. Push a fix when authorized and text the branch link again. Confirm the updated version runs. “What Skills do I have?” should list it. Test removal when finished if desired; the optional cache under HOME can be removed separately.
-14. If ASU returns HTTP 403 with `cf-mitigated: challenge`, confirm that Cubbie distinguishes access failure from zero results and stops repeating probes. With no browser handoff available, it should use `--cached` directly and state the source timestamp. The full returned Spring 2027 semester export supports CSE 575/510/512/572 as well as other subjects such as BIO, MAT and ACC. It should compare recorded sections without requiring screenshots. CSE 512 has no returned sections in that snapshot; this is a timestamped result, not a claim that it is never offered. A different semester must not turn into a false “no classes” answer. Cached results cannot verify current seats or complete the live-ASU test. RMP can remain live.
+## Offline smoke checks
 
-## Short conversation evaluations
+From the Skill folder, with Python 3.10+:
 
-These are expected behaviors, not claims of completed Cubbie tests:
+```bash
+python3 scripts/registration.py search --sample --subject CSE --course-number 240
+python3 scripts/registration.py professor --sample --course "CSE 240"
+python3 scripts/registration.py search --cached --term "Spring 2027" --subject CSE --course-number 572 --level 5 --population all --limit 3
+```
 
-| Prompt | Expected behavior |
-| --- | --- |
-| “Spring 2027, CSE 240, Tempe, after 10, no Fridays” | Starts retrieval without intake questions; uses Calendar natively; provides section comparison plus same-course backup if available. |
-| “Need an AI elective next semester, 3 credits, campus student” | Resolves the semester from student-local date, searches bounded discovery, batches any genuinely missing essentials in one message. |
-| “I want something online” | One grouped clarification for semester, course/interest and ASU Online vs campus-student iCourse eligibility. Does not equate online with asynchronous. |
-| “That professor has no RMP page?” | Keeps the class visible, says professor evidence is unavailable, does not invent or downgrade a rating. |
-| “No matches? Try another campus.” | Updates the explicitly relaxed campus constraint while keeping other hard constraints. |
-| “Choose the 15 credits I need to graduate” | Explains the boundary, can shortlist individual classes from an advisor-provided list, does not certify a degree plan. |
+Check that fictional samples are labeled, real catalog output preserves original source time, `--level 5` returns only 500–599, and generated ASU URLs use long query keys. The full automated suite lives at repository root in `tests/`; see CONTRIBUTING.md there.
 
-## Track 1 completion
+## Cubbie conversation checks
 
-The Skill must pass the official validator, scripts must pass local sample/live checks, and the main flow must work on the team's Cubbie. Submit a public repository link with the team/member details and a one-line pitch. A TikTok/Instagram demo is optional. Preview the exact public submission and obtain a clear yes before sending it, following the official kit.
+1. **Install/update.** Send the public `asu-registration-buddy` folder link. Confirm Cubbie reads the current Skill and executes from the updated checkout.
+2. **Intake.** Ask “Help me find machine learning classes.” Missing semester/program/preferences should be grouped together, with at most one further round for essentials. A course code is optional.
+3. **Exact courses.** Ask for Spring 2027 CSE 575, 510, 512, and 572, with your actual program/location preferences. Expect separate exact searches, then one comparison. Spring 2027 uses `--cached` directly.
+4. **Discovery.** Ask for a three-credit 500-level elective. Confirm keyword, level, population, and credit filters; unknowns should stay explicit. No eligible degree-plan guarantee.
+5. **Source note.** Expect one brief original catalog date/current-seat note in the comparison. Ask a follow-up about a professor; the same warning should not be repeated automatically.
+6. **Official links.** Open a returned ASU URL. It should load the requested semester/course; a valid section fragment should expand the intended section. Check returned IDs against the listing. RMP links should open the matched professor.
+7. **Review depth.** Confirm live RMP lookup saves a full corpus, follows available pagination, and reads `review-page` batches until `next_offset >= total_reviews`. The final summary should include recurring and mixed themes, course/date scope, and actual examined coverage. A few overview excerpts do not count as reading the corpus.
+8. **Calendar.** With the existing connection, check the full meeting date range and all rows against busy events. Known overlaps are excluded or clearly explained. Without Calendar access, continue with stated preferences and mark it unchecked.
+9. **Backup.** Ask “What if that section fills?” Expect another suitable section of the same course if one exists; no historical-seat guarantee or invented academic equivalence.
+
+## Failure checks
+
+- A denied live ASU request should stop blocked requests, retain useful planning evidence, and continue independent RMP/Calendar work. No challenge bypass or unavailable browser handoff requirement.
+- An unsupported bundled term should return `cache_miss`, not “no classes exist.”
+- Ambiguous RMP identity should produce no verified ratings. A later-page review failure should retain partial evidence with explicit coverage.
+- Incomplete Calendar or meeting data must not become a conflict-free guarantee.
+- Refreshing a saved file page must preserve the original source timestamp.
+- No fixture may write real saved state; no command should change Calendar events or registration accounts.
+
+The corrected ASU course-results URL and UI-generated section fragment were checked in a real browser during development. Live RMP full-corpus retrieval was also checked. Recheck actual Cubbie behavior after installation; local success alone cannot establish Cubbie's network access or Calendar coverage.

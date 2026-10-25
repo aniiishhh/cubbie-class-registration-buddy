@@ -1,37 +1,74 @@
 # ClassCue
 
-A Cubbie Skill for finding ASU classes, comparing sections with grounded Rate My Professors evidence, checking Calendar availability, and keeping a same-course backup ready.
+### Find your class. Know your professor. Make it fit.
 
-The installable folder is [`asu-registration-buddy/`](asu-registration-buddy/). It is self-contained: no local web server, separate LLM key or student registration login.
+ClassCue turns ASU registration research into a conversation with [Cubbie](https://cubbie.ai/). Bring a course code, a subject, or an interest. Get a focused shortlist with real section details, professor review evidence, schedule checks, and a backup choice.
 
-Text this link to Cubbie, approve installation, then send your registration request in a new message:
+Built for Track 1 of the [Cubbie Hackathon](https://hackathon.cubbie.ai/) by **Inert SI** — Anish Pravin Kulkarni and Bhavesh Balaji.
+
+## Try it on Cubbie
+
+Send this link to Cubbie and approve installation:
 
 ```text
 https://github.com/aniiishhh/cubbie-class-registration-buddy/tree/main/asu-registration-buddy
 ```
 
-Try: “Compare CSE 240 sections for Spring 2027. I'm a Tempe campus student, after 10, no Fridays.” Or ask for classes by subject/interest without a course code.
+Then send a request:
 
-For the hackathon submission, use the [repository link](https://github.com/aniiishhh/cubbie-class-registration-buddy).
+> Compare CSE 575, 510, 512, and 572 for Spring 2027. I'm a Tempe campus student, prefer afternoon classes, and care about clear teaching and manageable workload. Check my Calendar too.
 
-See [`docs/track-1-scope.md`](docs/track-1-scope.md) for the agreed scope and research. The official hackathon kit is a local, ignored reference clone in `references/cubbie-hackathon-kit/`; it is not part of the published Skill.
+No course code yet? Start with an interest:
 
-Track 1 progress: scope agreed; Skill written; local checks passed; public repository and install link verified. The first real Cubbie trial reported ASU HTTP 403. Browser/snapshot recovery is implemented; an updated Cubbie trial and hackathon submission remain pending.
+> Find a three-credit, 500-level CSE class related to machine learning for Spring 2027. Show me the best fits and explain the professor tradeoffs.
 
-For ASU's Cloudflare challenge, ClassCue can continue without browser handoff using the complete returned Spring 2027 export: 20,316 section records across 297 ASU subjects, compressed to about 1.5 MB. RMP and Calendar can remain live. Cached catalog data is not presented as a current seat or instructor-assignment check. Text the install link again after updates so Cubbie gets the updated data and instructions.
+Cubbie groups missing essentials into one or two short rounds. Give as much detail as you like; optional preferences stay optional.
 
-Local verification:
+## What ClassCue brings together
 
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r asu-registration-buddy/requirements.txt
-.venv/bin/python -m unittest discover -s tests -v
+| Capability | What you get |
+| --- | --- |
+| **ASU Class Search** | Direct live-query support for semester, subject, course, keyword, instructor, and session, with filters for location, level, credits, modality, days, and times. |
+| **Course discovery** | A bounded shortlist from your interests or catalog designations, even without a course code. |
+| **Professor insight** | Live Rate My Professors lookup, careful ASU identity matching, and full available review pagination with explicit coverage. Cubbie reads review text in batches and weighs recurring themes, mixed opinions, recency, and course relevance. |
+| **Schedule fit** | Cubbie's existing Google Calendar connection checks meetings against commitments, alongside your stated preferences. |
+| **A useful backup** | Another section of your chosen course, checked against the same constraints when one fits. |
+| **Traceable answers** | Official ASU course/section links, RMP profiles, source timestamps, and clear unknowns. |
+
+Supports all ASU subjects and campuses, including ASU Online and campus-student iCourses. It distinguishes program eligibility from where a class is taught.
+
+## From request to recommendation
+
+```mermaid
+flowchart TD
+    A[Your courses or interests] --> B{Enough context?}
+    B -->|Missing essentials| C[One grouped clarification]
+    C --> D[Search ASU sections]
+    B -->|Yes| D
+    D --> E[Apply course and schedule preferences]
+    E --> F[Check Cubbie's Calendar]
+    E --> G[Match instructors on RMP]
+    G --> H[Read available reviews and compare themes]
+    F --> I[Rank feasible choices]
+    H --> I
+    I --> J[Recommendation, backup, and source links]
 ```
 
-Samples also run with ordinary Python, without installed third-party packages:
+## Designed for real registration decisions
 
-```bash
-python3 asu-registration-buddy/scripts/registration.py search --sample --subject CSE --course-number 240
-```
+ClassCue explains why a section fits, what students say about its instructor, and what still needs checking. It prioritizes hard constraints before preferences and does not treat a high rating as proof of a good fit.
 
-See [`docs/validation.md`](docs/validation.md) for verified behavior and remaining checks, and [`asu-registration-buddy/references/testing.md`](asu-registration-buddy/references/testing.md) for the real Cubbie checklist.
+Source availability and freshness vary; ClassCue labels the evidence it actually used. Seat counts can change, and a listing does not establish enrollment eligibility. Confirm prerequisites, reserved seats, and required lab or recitation components on ASU. RMP comments are student opinions, with overall and course-specific evidence kept separate.
+
+ClassCue helps research courses and sections. It does not perform a degree audit, build a guaranteed full-semester plan, enroll you, or modify your registration cart.
+
+## Simple to install, easy to inspect
+
+The [installable Skill](asu-registration-buddy/) is self-contained: Python helpers, public-source clients, and instructions for Cubbie. No hosted backend, student password, separate LLM key, or custom Calendar integration is required. Calendar details stay with Cubbie and are never sent to ASU or RMP by these scripts.
+
+- [Skill workflow](asu-registration-buddy/SKILL.md) — how Cubbie interprets and handles requests
+- [Command reference](asu-registration-buddy/references/commands.md) — inputs, outputs, and source modes
+- [Acceptance checks](asu-registration-buddy/references/testing.md) — verify the installed experience
+- [Contributing](CONTRIBUTING.md) — local setup, tests, and data maintenance
+
+Text the same install link again after an update so Cubbie refreshes its installed copy.

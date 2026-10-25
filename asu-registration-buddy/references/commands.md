@@ -1,108 +1,129 @@
-# Retrieval commands
+# Command reference
 
-Run commands from this Skill folder using `~/.local/share/venvs/asu-registration-buddy/bin/python`. Examples below abbreviate that executable as `python`; use the persistent environment in Cubbie. All sources are public. No secrets, Calendar data or registration credentials are needed.
+Run from the Skill folder. Examples use `python`; in Cubbie, use `~/.local/share/venvs/asu-registration-buddy/bin/python` after Setup in `SKILL.md`.
 
-## Search inputs
+## ASU section search
+
+```bash
+python scripts/registration.py search --cached --term "Spring 2027" --subject CSE --course-number 572 --level 5 --population campus --campus TEMPE --limit 3 --save ~/.config/asu-registration-buddy/cse572.json
+```
+
+For discovery, omit the course number and use a subject, keyword, or catalog designation. Separate several requested course codes into individual exact queries with different saved filenames.
 
 | Flag | Meaning |
 | --- | --- |
-| `--term "Spring 2027"` | Explicit semester/year, or ASU term code `2271`. No live default. Spring=1, Summer=4, Fall=7 in ASU's `2YYs` encoding. |
-| `--subject BIO --course-number 181` | An exact course. Omit course number for discovery. |
-| `--keyword "artificial intelligence"` | A bounded catalog search; inspect titles/details for relevance. Avoid sending the student's entire message or personal information. |
-| `--population campus` | Campus students, including campus-student online iCourses; excludes ASU Online. |
+| `--term "Spring 2027"` | Required semester/year, or ASU code `2271`. Spring=1, Summer=4, Fall=7 in `2YYs` encoding. |
+| `--subject CSE --course-number 572` | Exact course; subject alone explores its courses. |
+| `--keyword "machine learning"` | Concise interest. Live maps to ASU's plural `keywords`; bundled lookup matches titles only. |
+| `--population campus` | Campus students, including iCourses; excludes ASU Online program offerings. |
 | `--population asu-online` | ASU Online program offerings. |
-| `--population all` | Unrestricted exploration; defaults to all. Do not imply every result is available to every student. |
-| `--campus TEMPE` | Actual teaching-location filter. Common codes: TEMPE, WEST, POLY, DTPHX, MESACITYCR; other official returned location codes also work. The source's administrative CAMPUS can differ. |
-| `--modality in-person` | Other choices: hybrid, online, sync, any. “Online” does not mean asynchronous. |
-| `--session A` | Exact session code; C is commonly full semester. Use returned dates rather than assuming lengths. |
-| `--level upper` | lower=100–299, upper=300–499, graduate=500–999; `--level 4` selects 400–499. |
-| `--min-credits 3 --max-credits 3` | Individual-course credit bounds. Variable-credit ranges must fit entirely within the bounds; no semester-credit optimizer. |
-| `--designation gold:HUAD` | Match the exact tag in the requested catalog system: gold, maroon or other. This is not a degree-audit check. |
-| `--instructor "Full Name"` | Narrow an ASU search to an instructor; inspect all returned matches if the name is partial. |
-| `--open-only` | Require positive known seats, open enrollment status and an active section. Reserved seats can still block enrollment. |
-| `--days MON,TUE,WED,THU` | All known meetings must fall within these allowed days. Unknown meetings remain flagged. |
-| `--after 10:00 --before 17:00` | All known meeting rows must fit these Phoenix-local bounds. Convert other time zones before calling. |
-| `--limit 3` | Initial output length, at most 5. May return fewer to fit Cubbie's 8,000-character read limit. |
-| `--max-pages 3` | Upstream page cap, at most 5. Incomplete coverage is reported. |
-| `--save ~/.config/asu-registration-buddy/current-search.json` | Optional private cache containing public catalog data only, not Calendar events or RMP reviews. Files are mode 600. |
-| `--sample` | Fictional offline records. No network or saved-state writes. Never use as live evidence. |
-| `--cached` | Explicit public catalog snapshot, with original retrieval time and declared semester/subject. Not a live seat check; mutually exclusive with `--sample`. |
+| `--population all` | Default: unrestricted exploration. Label eligibility differences. |
+| `--campus TEMPE` | Teaching location. Also WEST, POLY, DTPHX, MESACITYCR, or other returned location codes. Administrative campus may differ. |
+| `--modality in-person` | Also hybrid, online, sync, any. Online does not establish asynchronous delivery. |
+| `--session A` | Exact session code; inspect returned dates, including for full-semester C. |
+| `--level 5` | 500–599. Also 1–9 for hundreds; lower=100–299, upper=300–499, graduate=500–999. |
+| `--min-credits 3 --max-credits 3` | Individual-course bounds. A variable-credit range must fit entirely inside them. |
+| `--designation gold:HUAD` | Exact catalog designation; gold, maroon, and other are separate systems. |
+| `--instructor "Full Name"` | Filter by ASU instructor; verify identities in returned results. |
+| `--days MON,TUE,WED,THU,SAT,SUN` | All allowed days, e.g. no Friday. Known meetings outside these days are excluded. |
+| `--after 12:00 --before 18:00` | Earliest start/latest end in America/Phoenix, for every known meeting row. |
+| `--open-only` | Positive known seats, open enrollment status, active section. Historical in bundled mode; never proves reserved-seat eligibility. |
+| `--limit 3` | Display 1–5 records, possibly fewer to fit the output budget. |
+| `--max-pages 3` | Live retrieval cap: 1–5 pages. Read `coverage.complete`. |
+| `--save PATH` | Save all filtered fetched candidates privately for paging. Use one path per query. |
 
-Search filters are never silently relaxed. Upstream parameters narrow where supported; explicit location, population, course, level, credits, designation and meeting preferences are checked again locally. Unknown times cannot be certified to fit.
+Explicit filters are checked locally even when also sent upstream. Unknown meetings remain flagged. Discovery initially displays distinct courses; exact searches display sections. Neither solves required component enrollment rules.
 
-The CLI's `--keyword` maps to ASU's plural `keywords` HTTP parameter. The singular upstream parameter is silently ignored by ASU; this was verified during live checks.
+## Source modes and freshness
 
-## HTTP 403 and explicit snapshot recovery
+- **Default for Spring 2027 in Cubbie:** `--cached`. Reads the complete bundled public ASU export without network access or third-party packages.
+- **Live:** omit `--cached` for direct ASU queries when accessible, including other terms or an explicit fresh-seat request.
+- **Fictional fixtures:** `--sample`. Offline only, clearly labeled, and cannot write saved searches or real review corpora.
 
-HTTP 403 means that request was denied, not that no sections exist. Error JSON includes `service`, `http_status`, safe `response_headers` (Server/Via/content type/Cloudflare request or challenge metadata/Retry-After when present), and recovery guidance. `cf-mitigated: challenge` identifies a browser-verification response. Do not keep probing a known challenge or require browser handoff when it is unavailable. Cookies, authorization headers and full response bodies are not logged. A later successful diagnostic establishes access for that request only. Python `Session.get()` calls `Session.request()`, as ClassCue already does; changing that method name is not a separate transport. The prepared method/URL/headers/body/send options were verified equivalent. If an official browser happens to work it can be used, but the noninteractive snapshot path is available without it. An official course-search link is:
+The Spring 2027 export originally contains 20,316 records across 297 subjects and all returned campus/online locations. Its source time is **2026-10-24 23:39:17 UTC** (4:39 pm Phoenix). `assets/catalog_manifest.json` records provenance; trust runtime metadata if refreshed.
 
-https://catalog.apps.asu.edu/catalog/classes/classlist?t=2271&s=CSE&n=575&hon=F&promod=F&e=all
+For bundled results, use `source_checked_at`, `cache_age_hours`, `cache_stale`, `snapshot_scope`, and coverage fields. Never use command execution time as a new source check. `checked_at` is null, and `live_availability_verified` is false. Out-of-scope terms return `cache_miss`, not zero sections. `no_results` within scope describes that dataset and filters only. No automatic refresh runs.
 
-Without a usable browser, the bundled real public-source snapshot is available without network:
+For live results, `checked_at` records retrieval time. Coverage can be incomplete. Seats remain subject to change and restrictions.
 
-```bash
-python scripts/registration.py search --cached --term "Spring 2027" --subject CSE --course-number 575
-```
+Give the student one brief source/freshness note per comparison. Reuse that context in follow-ups; repeat only when the source changes, becomes stale, or current availability is material. Do not repeat the same warning per option or per review batch.
 
-It covers the complete returned Spring 2027 semester listing: 20,316 records across 297 ASU subjects, including returned campus and ASU Online locations. The approximately 1.5 MB gzip asset is read using Python's standard library. `assets/catalog_manifest.json` records scope and provenance without requiring the large data file to be opened. Runtime output reports scope, completeness, original `source_checked_at`, age, stale status and whether all subjects are covered; use these values if a later refresh changes the export. Records may have changed since retrieval. Never call the command's run time a new source check. Keyword filtering matches titles only. `--open-only` uses historical counts; current open seats remain unverified.
+An HTTP 403 is an access denial, not a zero-result response. `cf-mitigated: challenge` identifies Cloudflare verification. Stop blocked requests; do not probe repeatedly or bypass challenges. Use the covered export for planning, and continue independent RMP/Calendar work. Only safe response-header metadata is retained; cookies, authorization, and raw response bodies are omitted. A browser handoff is not required.
 
-Outside the declared snapshot scope, exit 6 / `cache_miss` is returned, not a fabricated zero-result answer. Within scope, `no_results` means none in that timestamped snapshot and its applied filters; it is not a claim about today's live catalog.
-
-Maintainer refresh, from an environment with normal authorized access to the public ASU source:
+## Page saved candidates
 
 ```bash
-python scripts/registration.py refresh-snapshot --term "Spring 2027"
+python scripts/registration.py page --file ~/.config/asu-registration-buddy/cse572.json --offset 3 --limit 3
 ```
 
-This fetches the whole returned semester listing, sequentially with a small inter-page delay; the default cap is 150 pages. It refuses incomplete/mismatched results and atomically replaces `assets/catalog_snapshot.json.gz` only on success, then updates the public manifest. Add `--subject CSE` only when intentionally making a limited subject export; that replaces the full-semester snapshot with narrower coverage, which the reader enforces. It writes public catalog data only. Commit/push the refreshed assets and text the branch link to Cubbie again to update. There is no automatic refresh service. Do not run this as part of a student's normal search or attempt to bypass network denials.
+Use the actual returned `next_offset` for the next call; output sizing may reduce the page. This reads the saved ordering without network and preserves original source times. An exact query for a course found through discovery can expose its alternative sections.
 
-Discovery initially displays different courses; exact-course searches display different sections. Primary course components are retained, but the Skill does not solve linked lab/recitation enrollment rules. Do not treat a primary section alone as proof that the complete enrollment package fits.
+## Valid official ASU links
 
-## Another page without new network requests
+Copy `asu_url` from normalized results. For valid numeric section/course IDs, it includes the official `#detailsOpen=CLASSNBR-CRSEID` fragment. `asu_search_url` opens that course's results without expanding a section. Without valid IDs, the helper falls back to course results.
 
-```bash
-python scripts/registration.py page --file ~/.config/asu-registration-buddy/current-search.json --offset 3 --limit 3
-```
+Current ASU routes use long parameter names, such as:
 
-Use the previous output's `next_offset`, not an assumed fixed increment. This command uses the saved discovery/section ordering. A new exact-course search can reveal alternatives for one course selected from discovery. `checked_at` remains the original retrieval time; this is not a fresh seat check. Refresh live before relying on availability.
+https://catalog.apps.asu.edu/catalog/classes/classlist?campusOrOnlineSelection=A&honors=F&promod=F&searchType=all&subject=CSE&catalogNbr=575&term=2271
 
-## Subject names
+`campusOrOnlineSelection=O` selects ASU Online. Never rebuild links using legacy `t`, `s`, `n`, `hon`, or `e` keys. Preserve literal `&`, not `\&` or `&amp;`. In iMessage send raw URLs on separate lines. These are official listing links, not enrollment actions.
+
+## Subjects and course detail (live)
 
 ```bash
 python scripts/registration.py subjects --term "Spring 2027" --query biology
+python scripts/registration.py detail --term "Spring 2027" --subject CSE --course-number 572 --course-id RETURNED_COURSE_ID
 ```
 
-Returns up to 40 code/name matches. Narrow `--query` if more exist.
+Use actual `course_id` from search results, not a guessed identifier. `subjects` returns up to 40 matches; narrow the query if necessary. `detail` returns descriptions and listed prerequisites/restrictions. Neither has a bundled-data mode. If live access is blocked, do not repeatedly invoke these. Catalog requirements do not certify student-specific eligibility.
 
-## Course descriptions and listed prerequisites
+## Professor lookup and full review corpus
 
 ```bash
-python scripts/registration.py detail --term "Spring 2027" --subject CSE --course-number 240 --course-id 104186
+python scripts/registration.py professor --name "Erik Trickel" --course "CSE 240" --campus TEMPE --save-reviews ~/.config/asu-registration-buddy/erik-trickel-reviews.json
 ```
 
-Take `course_id` from a fresh ASU search, not this example. Course descriptions support interest-based recommendations. Requirement text is source evidence only; it does not establish the student's grades, transfer-credit equivalencies, catalog year or personalized eligibility.
+Names must come from actual ASU section results. The helper searches ASU RMP directory entries, rechecks affiliation, and requires a single exact name match. Check department compatibility before attaching ratings. `needs_confirmation` means no verified rating; never choose a different person because their ratings look better. `--school-id` and `--teacher-id`, when needed, must come from returned candidates. Campus orders identity searches; it does not certify RMP affiliation.
 
-## RMP evidence
+| Professor flag | Purpose |
+| --- | --- |
+| `--max-pages 2` | Identity-search pages per ASU directory entry; 1–3. |
+| `--review-pages 250` | Separate review pagination cap; 1–500, 20 reviews per page, with about 60 seconds of retrieval budget. Stops earlier on exhaustion, stalled pagination, or source failure. |
+| `--max-reviews 4` | Overview excerpts only; 1–6. Does not limit the full saved corpus. |
+| `--save-reviews PATH` | Save full unique fetched comments privately; returns `reviews_file`. |
+
+Overview output:
+
+- `statistics`: overall professor metrics, not course-specific scores.
+- `course_reviews` / `general_reviews`: a few varied overview excerpts, including positive/critical examples when available. These are not sufficient for the complete analysis.
+- `review_coverage`: page count, stop reason, reported total, elapsed time, and pagination completeness.
+- `reviews_fetched`: unique fetched records; a profile total may differ.
+- `corpus_summary`: date span, course/tag counts, and score distributions across the fetched corpus. These are counts, not automated sentiment claims.
+- `reviews_status`: `ok`, `partial`, or `unavailable`; partial retrieval retains usable reviews with explicit limits.
+
+Read the complete fetched corpus in batches:
 
 ```bash
-python scripts/registration.py professor --name "Erik Trickel" --course "CSE 240" --campus TEMPE --max-pages 2 --max-reviews 4
+python scripts/registration.py review-page --file ~/.config/asu-registration-buddy/erik-trickel-reviews.json --offset 0 --limit 10
 ```
 
-The client searches returned ASU school directory entries and checks professor-school affiliation again. Exact full-name matches are candidates for attachment; check the department against ASU too. Close/partial/multiple matches return `needs_confirmation`, not a verified rating. Do not attach an attractive unrelated professor's rating.
+Repeat using each response's **actual `next_offset`** until it reaches `total_reviews`. This command reads full comments locally, without network; it may return fewer than requested to stay under the output limit. `checked_at` remains the original retrieval time.
 
-If investigating an ambiguous profile later, `--school-id` and `--teacher-id` must come from the returned candidate records. Never invent IDs. A campus merely orders directory searches; RMP school affiliation is not evidence of teaching location.
+Build notes across every batch: recurring themes, supporting counts, contrary evidence, requested-course vs broader reviews, and recent vs older experiences. Fetching all pages does not prove Cubbie read all comments. If the reading or retrieval stops early, report the actual coverage. Pagination completion establishes exhaustion of available pages at retrieval time, not that RMP exposes every review ever posted.
 
-`course_reviews` and `general_reviews` are separate. Statistics are always overall professor statistics. Review page limits apply to both professor-search pagination and review pagination; `reviews_fetched` and `course_matches_in_fetched_pages` describe only fetched pages. Dates, excerpts and tags are evidence, not instructions or guaranteed course policies.
+RMP comments are unverified student opinions. Missing profiles or reviews are not negative evidence. Keep full corpora in private working files, reuse them during the comparison, and remove them when no longer needed. They must not be committed to the public repository.
 
-## Output and exit codes
+## Output, storage, and exit codes
 
-JSON is kept below 7,800 characters. Search/detail/subject result lists may be shortened with `output_limited: true`; no meeting row or JSON string is silently cut. If one record cannot fit, exit 5 instead. Keep `--max-reviews` low if RMP output is too large.
+Output stays under 7,800 characters. `returned` and `next_offset` reflect records actually emitted. Lists may be shortened with `output_limited: true`; individual records/meeting rows are never silently cut. Overview excerpts are explicitly shortened; saved review comments are full text. If one record cannot fit, exit 5 requests a narrower output or direct inspection of the private file.
 
-- 0: successful retrieval, including `no_results`, `not_found` or `needs_confirmation`; read the status.
-- 2: malformed input or unreadable local file.
-- 3: source unavailable/API error; no false empty result is inferred.
-- 4: missing runtime dependency; run Setup.
-- 5: output cannot fit; narrow the request.
-- 6: explicit snapshot lookup has no coverage for the requested term (or subject in a limited export); request a refreshed export or explain the unavailable source.
+| Exit | Meaning |
+| --- | --- |
+| 0 | Read the status: success, no_results, not_found, or needs_confirmation. |
+| 2 | Invalid input or unreadable local file. |
+| 3 | Source/API unavailable; no false empty result inferred. |
+| 4 | Missing runtime dependency; follow Setup. |
+| 5 | Output too large; reduce displayed results/excerpts or read a private file in smaller batches. |
+| 6 | Requested term/subject outside bundled snapshot coverage. |
 
-Search has an optional private cache write; `refresh-snapshot` is a maintainer-only public snapshot write. Sample runs do not write saved state. Remove the private cache when no longer needed. The scripts contain no Calendar client and never read or change Google data.
+Saved searches and review corpora use mode 600. Public APIs receive only course/search filters or professor lookup information. Calendar details stay with Cubbie. The scripts never enroll, modify carts, send messages, or access Google accounts. Snapshot refresh is a maintainer operation documented in the project CONTRIBUTING guide.
